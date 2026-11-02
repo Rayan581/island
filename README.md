@@ -92,6 +92,16 @@ Notifications from the apps you choose (by default WhatsApp, Discord, Gmail, Mai
 - **Island can't hide Windows' own banners.** To see notifications only in the island, turn off *Show notification banners* for those apps in Windows Settings → System → Notifications, but keep *Show notifications in notification center* on, or Windows never writes them to the database.
 - **Browsers.** Chrome/Edge notifications are off by default; a Gmail tab (notifications from `mail.google.com`) is recognised as Gmail.
 
+### Drop zone shelf
+
+Drag files or folders onto the island to park them, then drag them out again later (like Dropover). The island opens to the **Shelf** tab while a drag is over it, and a small tray badge shows in the pill while the shelf has items.
+
+- **Add:** drop onto the island, or use **Add files…** in the Shelf tab (always works, no helper needed). Duplicates are ignored, and the shelf holds 24 items.
+- **Drag out:** drag a tile into any app or folder. Click tiles to select several and drag them together. Files are copied, not moved, and stay on the shelf until you remove them.
+- **Tile actions (on hover):** show in folder, open (also double-click), remove. **Clear all** empties the shelf without touching the files.
+- The shelf stores paths only (`%APPDATA%\Island\features\shelf.json`); files that no longer exist drop off the shelf.
+- **How dropping works.** The island window is click-through, and no mouse events arrive during a drag, so the helper reports the left mouse button, and while it is down with the pointer over the island Island briefly makes the window interactive. It goes back to click-through the moment the button is released or the pointer leaves (with a 20 s safety limit), and never while Ctrl pass-through is on. This needs `npm run build:helper`; without the helper, use **Add files…**.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
