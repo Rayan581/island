@@ -13,9 +13,11 @@
   import FocusView from './components/FocusView.svelte';
   import SettingsView from './components/SettingsView.svelte';
   import Icon from './components/Icon.svelte';
+  import { features, ctxs, initFeatures } from './features/registry.svelte';
 
   const api = getApi();
   const store = new Store(api);
+  initFeatures(store, api);
   (window as unknown as { __island: Store }).__island = store; // handy in devtools
 
   let demo: Demo | null = null;
@@ -38,7 +40,14 @@
   // Hold Ctrl while the pointer is over the island and clicks (and hover) pass through to the app underneath.
   // A non-focusable window never sees key events, but the forwarded mouse events carry the Ctrl state.
   let openTimer = 0, closeTimer = 0, hovering = false, passing = $state(false);
-  function startOpen() { if (!store.expanded) openTimer = window.setTimeout(() => (store.expanded = true), 110); }
+  function startOpen() {
+    if (store.expanded) return;
+    openTimer = window.setTimeout(() => {
+      const f = pill.feature; // a feature that owns the pill opens to its own tab
+      if (f?.panel && f.pill?.openTab !== false) store.view = `f:${f.id}`;
+      store.expanded = true;
+    }, 110);
+  }
   function setPass(on: boolean) {
     if (on === passing) return;
     passing = on;
@@ -74,7 +83,9 @@
 
   const cfg = $derived(store.settings);
   const notch = $derived(cfg.style === 'notch');
-  const openHeight = $derived(store.view === 'settings' ? 340 : 236);
+  const featureTab = $derived(store.view.startsWith('f:') ? features.find((f) => `f:${f.id}` === store.view && f.panel && ctxs[f.id]?.enabled) ?? null : null);
+  $effect(() => { if (store.view.startsWith('f:') && !featureTab) store.view = 'home'; }); // its feature was switched off
+  const openHeight = $derived(store.view === 'settings' ? 340 : featureTab?.panel?.height ?? 236);
   const islandWidth = $derived(store.expanded ? cfg.expandedWidth : pill.width);
   const shellRadius = $derived(store.expanded ? (notch ? '0 0 30px 30px' : '30px') : collapsedRadius(cfg, pill.width));
   const pad = $derived(notch ? Math.round(Math.min(cfg.radiusX * 0.42, 70)) : 11);
@@ -86,7 +97,12 @@
     { id: 'focus', icon: 'focus', label: 'Focus' },
     { id: 'settings', icon: 'gear', label: 'Settings' }
   ];
-  const titles: Record<View, [string, string]> = { home: ['Home', ''], claude: ['Claude', 'Code'], music: ['Music', 'Player'], focus: ['Focus', 'Timer'], settings: ['Settings', ''] };
+  const allTabs = $derived([
+    ...tabs.slice(0, -1),
+    ...features.filter((f) => f.panel && ctxs[f.id]?.enabled).map((f) => ({ id: `f:${f.id}` as View, icon: f.panel!.icon, label: f.panel!.label })),
+    tabs[tabs.length - 1]
+  ]);
+  const titles: Record<string, [string, string]> = { home: ['Home', ''], claude: ['Claude', 'Code'], music: ['Music', 'Player'], focus: ['Focus', 'Timer'], settings: ['Settings', ''] };
   const dateLabel = $derived(new Date(store.now).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }));
   const claudeDot = $derived(store.claude?.status === 'running' ? 'var(--claude)' : store.claude?.status === 'attention' ? 'var(--attn)' : store.claude?.status === 'done' && !store.claude.seen ? 'var(--done)' : '');
 </script>
@@ -115,12 +131,12 @@
   {#if notch && cfg.ear > 0}<span class="ear l"></span><span class="ear r"></span>{/if}
   <div class="shell">
     <div class="layer pill-layer" aria-hidden={store.expanded}>
-      <Pill {store} kind={pill.kind} badges={pill.badges} />
+      <Pill {store} kind={pill.kind} badges={pill.badges} feature={pill.feature} featureBadges={pill.featureBadges} />
     </div>
 
     <div class="layer panel" aria-hidden={!store.expanded}>
       <header>
-        <span class="title"><b>{titles[store.view][0]}</b>{#if titles[store.view][1]}<span class="accent {store.view}">{titles[store.view][1]}</span>{/if}</span>
+        <span class="title"><b>{featureTab ? featureTab.panel!.label : titles[store.view][0]}</b>{#if !featureTab && titles[store.view][1]}<span class="accent {store.view}">{titles[store.view][1]}</span>{/if}</span>
         <span class="date tnum">{dateLabel}</span>
         <span class="status">
           {#if claudeDot}<i style:background={claudeDot}></i>{/if}
@@ -136,13 +152,14 @@
             {:else if store.view === 'claude'}<ClaudeView {store} />
             {:else if store.view === 'music'}<MusicView {store} />
             {:else if store.view === 'settings'}<SettingsView {store} />
+            {:else if featureTab}{@const C = featureTab.panel!.component}<C ctx={ctxs[featureTab.id]} />
             {:else}<FocusView {store} />{/if}
           </div>
         {/key}
       </main>
 
       <nav>
-        {#each tabs as t}
+        {#each allTabs as t (t.id)}
           <button class:sel={store.view === t.id} onclick={() => (store.view = t.id)} aria-label={t.label}>
             <Icon name={t.icon} size={13} />{#if store.view === t.id}<span>{t.label}</span>{/if}
           </button>

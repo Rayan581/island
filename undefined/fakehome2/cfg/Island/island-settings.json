@@ -1,0 +1,14 @@
+{
+  "style": "notch",
+  "idleWidth": 560,
+  "activeWidth": 280,
+  "height": 46,
+  "topOffset": 6,
+  "radius": 18,
+  "radiusX": 18,
+  "ear": 12,
+  "expandedWidth": 520,
+  "eyesFollow": true,
+  "keepOnTop": true,
+  "features": {}
+}

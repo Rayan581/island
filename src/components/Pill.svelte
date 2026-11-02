@@ -7,14 +7,19 @@
   import Eq from './Eq.svelte';
   import Art from './Art.svelte';
   import Icon from './Icon.svelte';
+  import type { IslandFeature } from '../features/types';
+  import { ctxs } from '../features/registry.svelte';
 
-  let { store, kind, badges }: { store: Store; kind: PillKind; badges: Badge[] } = $props();
+  let { store, kind, badges, feature = null, featureBadges = [] }: { store: Store; kind: PillKind; badges: Badge[]; feature?: IslandFeature | null; featureBadges?: IslandFeature[] } = $props();
   const c = $derived(store.claude);
   const focusPct = $derived(1 - store.focus.left / store.focus.total);
 </script>
 
 <div class="pill">
-  {#if kind === 'idle'}
+  {#if kind === 'feature' && feature?.pill}
+    {@const C = feature.pill.component}
+    <C ctx={ctxs[feature.id]} />
+  {:else if kind === 'idle'}
     <div class="center"><Eyes follow={store.settings.eyesFollow} /></div>
   {:else if kind === 'volume'}
     <span class="ico"><Icon name={store.volume.muted ? 'mute' : 'speaker'} size={16} /></span>
@@ -61,15 +66,19 @@
       <span class="badge"><Art src={store.music.art} size={20} radius={10} /></span>
     {/if}
   {/each}
+  {#each featureBadges as f (f.id)}
+    <span class="badge fbadge" title={f.label} style:color={f.badge?.color ?? '#fff'}><Icon name={f.badge?.icon ?? 'dot'} size={13} /></span>
+  {/each}
 </div>
 
 <style>
   .pill { position: absolute; inset: 0; display: flex; align-items: center; gap: 9px; padding: 0 var(--pad, 11px); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
   .center { flex: 1; display: flex; justify-content: center; }
-  .text { flex: 1; }
-  .dim { color: var(--mute); font-weight: 500; }
-  .trail { margin-left: auto; font-size: 12.5px; }
-  .ico { display: grid; place-items: center; flex: none; }
+  /* shared with feature pills (rendered inside .pill), hence :global */
+  .pill :global(.text) { flex: 1; min-width: 0; }
+  .pill :global(.dim) { color: var(--mute); font-weight: 500; }
+  .pill :global(.trail) { margin-left: auto; font-size: 12.5px; }
+  .pill :global(.ico) { display: grid; place-items: center; flex: none; }
   .attn { color: var(--attn); } .done-c { color: #60a5fa; } .focus-c { color: #c895ff; }
   .count { font-size: 10.5px; color: var(--claude); background: rgba(217,119,87,.16); padding: 1px 6px; border-radius: 8px; }
   .spinner { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--claude); border-right-color: transparent; animation: spin .9s linear infinite; flex: none; }
@@ -79,8 +88,8 @@
           -webkit-mask: radial-gradient(circle, transparent 4.5px, #000 5px); mask: radial-gradient(circle, transparent 4.5px, #000 5px); }
   .ring.sm { width: 12px; height: 12px; -webkit-mask: radial-gradient(circle, transparent 3px, #000 3.5px); mask: radial-gradient(circle, transparent 3px, #000 3.5px); }
   .done-ring { background: var(--focus); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: block; }
-  .badge { display: inline-flex; align-items: center; gap: 5px; flex: none; font-size: 11.5px; }
+  .pill :global(.dot) { width: 8px; height: 8px; border-radius: 50%; display: block; }
+  .pill :global(.badge) { display: inline-flex; align-items: center; gap: 5px; flex: none; font-size: 11.5px; }
   .vbar { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
   .vbar div { height: 100%; background: #fff; border-radius: 3px; transition: width .15s; }
   .lyric { animation: rise .35s var(--ease); }

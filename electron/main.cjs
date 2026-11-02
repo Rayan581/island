@@ -7,10 +7,11 @@ const { Helper, helperPath } = require('./helper.cjs');
 const { Relay, ensureConfig } = require('./relay.cjs');
 const { SettingsStore } = require('./settings.cjs');
 const { cursorRelative } = require('./cursor.cjs');
+const { loadFeatures } = require('./features/index.cjs');
 
 const DEV = !!process.env.ISLAND_DEV;
 let demo = process.argv.includes('--demo');
-let win, tray, helper, lyrics, relay, settings, relayConfigPath, topTimer, cursorTimer, hidden = false, lastCursor = '', helperStatus = 'starting', relayStatus = 'starting';
+let win, tray, helper, lyrics, relay, settings, relayConfigPath, topTimer, cursorTimer, hidden = false, suppressed = new Set(), stopFeatures, helperListeners = new Map(), lastCursor = '', helperStatus = 'starting', relayStatus = 'starting';
 const WIN_W = 700, WIN_H = 400; // room for the expanded island, its curved ears and its shadow
 
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -34,7 +35,7 @@ function openRelaySettings() {
 // Windows lets another "topmost" window (or a lock/unlock, or a display change) push ours down the z-order, and a
 // non-focusable window never gets a chance to react. So re-assert it regularly.
 function assertTop() {
-  if (!win || win.isDestroyed() || hidden) return;
+  if (!win || win.isDestroyed() || hidden || suppressed.size) return;
   try {
     if (win.isMinimized()) win.restore();
     if (!win.isVisible()) win.showInactive();
@@ -45,8 +46,18 @@ function assertTop() {
 // Hide / show the whole island (tray item or Ctrl+Alt+I), e.g. to click something it covers.
 function setHidden(h) {
   hidden = !!h;
-  if (win && !win.isDestroyed()) { if (hidden) win.hide(); else { win.showInactive(); assertTop(); } }
+  applyVisibility();
   buildTray();
+}
+/** Features (e.g. game mode) can keep the island out of the way without touching the user's own Hide switch. */
+function setSuppressed(reason, on) {
+  if (on) suppressed.add(reason); else suppressed.delete(reason);
+  applyVisibility();
+}
+function applyVisibility() {
+  if (!win || win.isDestroyed()) return;
+  if (hidden || suppressed.size) { if (win.isVisible()) win.hide(); }
+  else { win.showInactive(); assertTop(); }
 }
 function applyKeepOnTop() {
   clearInterval(topTimer);
@@ -87,7 +98,7 @@ function createWindow() {
   win.setIgnoreMouseEvents(true, { forward: true }); // renderer flips this while the pointer is on the island
   placeWindow();
   if (DEV) win.loadURL('http://localhost:5173'); else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
-  win.once('ready-to-show', () => { if (!hidden) win.showInactive(); });
+  win.once('ready-to-show', () => { if (!hidden && !suppressed.size) win.showInactive(); });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
 }
 
@@ -136,7 +147,10 @@ app.whenReady().then(() => {
   settings = new SettingsStore(path.join(app.getPath('userData'), 'island-settings.json'));
   createWindow();
   claude.startServer((ev) => send('claude', ev));
-  helper = new Helper(helperPath(app), (msg) => (msg.type === 'ctrl' ? send('ctrl', !!msg.down) : send(msg.type, msg)), (s) => { helperStatus = s; buildTray(); send('config', config()); });
+  helper = new Helper(helperPath(app), (msg) => {
+    for (const cb of helperListeners.get(msg.type) || []) try { cb(msg); } catch (e) { console.error(e); }
+    if (msg.type === 'ctrl') send('ctrl', !!msg.down); else if (msg.type === 'media' || msg.type === 'volume') send(msg.type, msg);
+  }, (s) => { helperStatus = s; buildTray(); send('config', config()); });
   helper.start();
   relayConfigPath = path.join(app.getPath('userData'), 'relay.json');
   relay = new Relay({ configPath: relayConfigPath, onEvent: (ev) => send('claude', ev), onStatus: (s) => { relayStatus = s; buildTray(); } });
@@ -147,6 +161,10 @@ app.whenReady().then(() => {
   screen.on('display-removed', placeWindow);
   for (const ev of ['resume', 'unlock-screen']) powerMonitor.on(ev, () => { placeWindow(); assertTop(); });
   for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, assertTop);
+  stopFeatures = loadFeatures({
+    app, ipcMain, getWin: () => win, send, settings, helper: () => helper, dataDir: app.getPath('userData'), setSuppressed,
+    onHelper: (type, cb) => { if (!helperListeners.has(type)) helperListeners.set(type, []); helperListeners.get(type).push(cb); }
+  });
   applyKeepOnTop();
   applyCursorPolling();
   try { globalShortcut.register('Control+Alt+I', () => setHidden(!hidden)); } catch { /* shortcut taken: the tray item still works */ }
@@ -170,5 +188,5 @@ app.whenReady().then(() => {
 });
 
 app.on('second-instance', () => { if (win) setHidden(false); });
-app.on('before-quit', () => { globalShortcut.unregisterAll(); helper && helper.stop(); relay && relay.stop(); settings && settings.flush(); clearInterval(topTimer); clearTimeout(cursorTimer); });
+app.on('before-quit', () => { globalShortcut.unregisterAll(); stopFeatures && stopFeatures(); helper && helper.stop(); relay && relay.stop(); settings && settings.flush(); clearInterval(topTimer); clearTimeout(cursorTimer); });
 app.on('window-all-closed', () => app.quit());

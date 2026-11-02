@@ -3,7 +3,7 @@ import type { Settings } from './types';
 // Keep in step with electron/settings.cjs (tests/settings.test.cjs checks that they agree).
 export const DEFAULT_SETTINGS: Settings = {
   style: 'floating', idleWidth: 132, activeWidth: 280, height: 36, topOffset: 6, radius: 18, radiusX: 18, ear: 0,
-  expandedWidth: 520, eyesFollow: true, keepOnTop: true
+  expandedWidth: 520, eyesFollow: true, keepOnTop: true, features: {}
 };
 
 /** What the two styles set when you pick them; sliders then tweak from there. */

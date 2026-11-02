@@ -2,6 +2,7 @@
   import type { Store } from '../lib/store.svelte';
   import { CONTROLS, PRESETS, collapsedRadius } from '../lib/settings';
   import Eyes from './Eyes.svelte';
+  import { features, ctxs } from '../features/registry.svelte';
 
   let { store }: { store: Store } = $props();
   const s = $derived(store.settings);
@@ -43,6 +44,19 @@
     <label><input type="checkbox" checked={s.eyesFollow} onchange={(e) => store.updateSettings({ eyesFollow: e.currentTarget.checked })} />Eyes follow the cursor</label>
     <label><input type="checkbox" checked={s.keepOnTop} onchange={(e) => store.updateSettings({ keepOnTop: e.currentTarget.checked })} />Keep above other windows</label>
   </div>
+
+  {#if features.length}
+    <h4>Features</h4>
+    <div class="feats">
+      {#each features as f (f.id)}
+        {@const on = ctxs[f.id]?.enabled ?? f.defaultEnabled}
+        <div class="feat">
+          <label><input type="checkbox" checked={on} onchange={(e) => store.setFeature(f.id, e.currentTarget.checked)} /><b>{f.label}</b><span class="hint">{f.description}</span></label>
+          {#if on && f.settings}{@const C = f.settings}<div class="fset"><C ctx={ctxs[f.id]} /></div>{/if}
+        </div>
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -64,4 +78,9 @@
   .toggles { display: flex; gap: 18px; font-size: 11px; color: var(--mute); }
   .toggles label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
   .toggles input { accent-color: #c4f5d2; }
+  h4 { margin: 6px 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--mute); }
+  .feats { display: flex; flex-direction: column; gap: 6px; }
+  .feat label { display: flex; align-items: baseline; gap: 8px; font-size: 12px; }
+  .feat .hint { font-size: 11px; }
+  .fset { padding: 4px 0 2px 24px; font-size: 11.5px; }
 </style>

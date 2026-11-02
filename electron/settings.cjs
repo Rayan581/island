@@ -12,7 +12,8 @@ const DEFAULTS = {
   ear: 0,              // notch style: size of the curved ears at the top corners
   expandedWidth: 520,  // width when opened
   eyesFollow: true,    // Robo's eyes look at the cursor when it is near
-  keepOnTop: true      // keep re-asserting "always on top" so other windows can't cover the pill
+  keepOnTop: true,     // keep re-asserting "always on top" so other windows can't cover the pill
+  features: {}         // feature on/off switches by id (missing = the feature's default)
 };
 
 const NUMBERS = {
@@ -32,6 +33,10 @@ function sanitize(patch, base = DEFAULTS) {
   }
   for (const k of BOOLEANS) if (typeof patch[k] === 'boolean') out[k] = patch[k];
   if (STYLES.includes(patch.style)) out.style = patch.style;
+  if (patch.features && typeof patch.features === 'object') {
+    out.features = { ...base.features };
+    for (const [k, v] of Object.entries(patch.features)) if (/^[a-z0-9-]{1,40}$/.test(k) && typeof v === 'boolean') out.features[k] = v;
+  }
   return out;
 }
 

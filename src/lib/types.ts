@@ -1,4 +1,5 @@
-export type View = 'home' | 'claude' | 'music' | 'focus' | 'settings';
+/** Built-in tabs, or `f:<feature id>` for a feature's own tab. */
+export type View = 'home' | 'claude' | 'music' | 'focus' | 'settings' | `f:${string}`;
 
 export interface Config { demo: boolean; platform: string; helper: string; claudeConnected: boolean; hookPort: number }
 
@@ -24,6 +25,8 @@ export interface Settings {
   idleWidth: number; activeWidth: number; height: number; topOffset: number;
   radius: number; radiusX: number; ear: number; expandedWidth: number;
   eyesFollow: boolean; keepOnTop: boolean;
+  /** Feature on/off switches by feature id; missing = the feature's default. */
+  features: Record<string, boolean>;
 }
 
 export interface IslandAPI {
@@ -32,6 +35,9 @@ export interface IslandAPI {
   onSettings(cb: (s: Settings) => void): () => void;
   /** Cursor position relative to the island window, or null when it is far away. */
   /** Ctrl key held down anywhere (read natively, since the island window never has focus). */
+  onFeature(cb: (m: { id: string; data: unknown }) => void): () => void;
+  featureCall(id: string, action: string, arg?: unknown): Promise<unknown>;
+  pathForFile(file: File): string;
   onCtrl(cb: (down: boolean) => void): () => void;
   onCursor(cb: (p: { x: number; y: number } | null) => void): () => void;
   ignoreMouse(v: boolean): void;

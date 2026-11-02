@@ -62,6 +62,7 @@ internal static class Program
         _heartbeat = new Timer(_ => Emit(new JsonObject { ["type"] = "hb" }), null, 0, 2000);
 
         using var ctrl = new CtrlWatcher();
+        HelperFeatures.StartAll();
 
         var media = new MediaWatcher();
         using var volume = new VolumeWatcher();
@@ -82,7 +83,7 @@ internal static class Program
             var cmd = line.Trim();
             if (cmd.Length == 0) continue;
             Log($"cmd: {cmd}");
-            try { await media.CommandAsync(cmd); }
+            try { if (!await HelperFeatures.TryHandleAsync(cmd)) await media.CommandAsync(cmd); }
             catch (Exception e)
             {
                 Log($"cmd failed: {e}");

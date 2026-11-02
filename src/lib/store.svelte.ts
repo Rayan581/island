@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from './settings';
 import { cursor } from './cursor.svelte';
 import { accentFromImage, fallbackAccent, type Accent } from './color';
 import { basename } from './format';
+import { islandEvents } from './events';
 
 const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'LS', 'WebFetch', 'WebSearch', 'TodoWrite', 'Task']);
 const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'Write', 'NotebookEdit']);
@@ -81,6 +82,8 @@ export class Store {
     }, 150);
   }
 
+  setFeature(id: string, on: boolean) { this.updateSettings({ features: { ...this.settings.features, [id]: on } }); }
+
   // ---------------- Claude Code ----------------
   claudeEvent(e: HookEvent) {
     const id = e.session_id || 'default', now = Date.now();
@@ -110,10 +113,12 @@ export class Store {
         const msg = e.message ?? 'Needs your attention';
         if (s.status === 'done' && /waiting for your input/i.test(msg)) break; // idle reminder after a finished turn
         Object.assign(s, { status: 'attention', detail: msg, seen: false });
+        islandEvents.emit('error', { source: 'claude', project: s.project, message: msg });
         break;
       }
       case 'Stop':
         Object.assign(s, { status: 'done', endedAt: now, phase: 3, seen: false });
+        islandEvents.emit('success', { source: 'claude', project: s.project });
         break;
     }
   }
@@ -221,6 +226,7 @@ export class Store {
       f.left = Math.max(0, (f.endsAt - this.now) / 1000);
       if (f.left <= 0) {
         f.running = false; f.flashUntil = this.now + 8000;
+        islandEvents.emit('success', { source: 'focus' });
         try { new Notification('Focus session complete', { body: 'Nice work. Time for a short break.', silent: false }); } catch { /* no notifications in some contexts */ }
       }
     }
