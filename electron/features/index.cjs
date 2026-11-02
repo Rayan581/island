@@ -6,9 +6,22 @@ function loadFeatures({ app, ipcMain, getWin, send, settings, helper, onHelper, 
   const cfgDir = path.join(dataDir, 'features');
   try { fs.mkdirSync(cfgDir, { recursive: true }); } catch {}
   const handlers = new Map(); // `${id}:${action}` -> fn
+  // Small per-feature JSON config in %APPDATA%\Island\features\<id>.json (renderer: ctx.getConfig / ctx.setConfig).
+  const makeConfig = (id) => {
+    const cfgFile = path.join(cfgDir, `${id}.json`);
+    return {
+      get: () => { try { return JSON.parse(fs.readFileSync(cfgFile, 'utf8')); } catch { return {}; } },
+      set: (obj) => { try { fs.writeFileSync(cfgFile, JSON.stringify(obj ?? {}, null, 2)); } catch (e) { console.error(`[feature ${id}] config:`, e.message); } return obj; }
+    };
+  };
   const stops = [];
   ipcMain.handle('feature:call', async (_e, id, action, arg) => {
-    const h = handlers.get(`${id}:${action}`);
+    let h = handlers.get(`${id}:${action}`);
+    // Renderer-only features (no electron/features/<id>.cjs) still get their config file.
+    if (!h && (action === 'config:get' || action === 'config:set') && /^[a-z0-9-]{1,40}$/.test(String(id))) {
+      const c = makeConfig(String(id));
+      h = action === 'config:get' ? async () => c.get() : async (obj) => c.set(obj);
+    }
     if (!h) throw new Error(`no handler ${id}:${action}`);
     return h(arg);
   });
@@ -17,12 +30,7 @@ function loadFeatures({ app, ipcMain, getWin, send, settings, helper, onHelper, 
     let mod;
     try { mod = require(path.join(__dirname, file)); } catch (e) { console.error(`[feature ${file}] failed to load:`, e); continue; }
     const id = mod.id || file.replace(/\.cjs$/, '');
-    // Small per-feature JSON config in %APPDATA%\Island\features\<id>.json (renderer: ctx.getConfig / ctx.setConfig).
-    const cfgFile = path.join(cfgDir, `${id}.json`);
-    const config = {
-      get: () => { try { return JSON.parse(fs.readFileSync(cfgFile, 'utf8')); } catch { return {}; } },
-      set: (obj) => { try { fs.writeFileSync(cfgFile, JSON.stringify(obj ?? {}, null, 2)); } catch (e) { console.error(`[feature ${id}] config:`, e.message); } return obj; }
-    };
+    const config = makeConfig(id);
     handlers.set(`${id}:config:get`, async () => config.get());
     handlers.set(`${id}:config:set`, async (obj) => config.set(obj));
     const ctx = {

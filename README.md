@@ -33,6 +33,8 @@ The Settings tab, with a live preview of the collapsed pill:
 
 ## Features
 
+Every feature can be switched on or off under **Settings → Features**. *Mic and camera*, *Drop zone shelf* (dropping) and *Game mode* need the helper, so rebuild it after updating: `npm run build:helper`.
+
 ### Download done
 
 When a download finishes, the pill shows its file icon, name and size for a few seconds; hover to open the **Downloads** tab, which lists the last 8 with **Open**, **Show in folder**, and drag-out into Explorer, a browser or a chat. A blue download badge stays on the pill for a minute afterwards.
@@ -187,4 +189,3 @@ When the chat starts a turn the pill switches to the running state; when it fini
 
 - Robo: a chat assistant that runs `claude -p` with your existing Claude Code login. Shortcut buttons for the clipboard, and drag Robo onto your screen to ask about what's there.
 - Optional Spotify lyrics source (unofficial, opt-in)
-- Hide during fullscreen games and videos; settings panel

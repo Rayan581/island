@@ -296,7 +296,7 @@ module.exports = {
   filetimeToMs, decodeEntities, payloadToString, parseToast, appInfo, resolveApp, isAllowed, toNotification, cleanName, WpnReader, DEFAULT_APPS, loadSqlite,
 
   start(ctx) {
-    if (process.platform !== 'win32' && !process.env.ISLAND_WPN_DIR) return;
+    if (process.platform !== 'win32' && !process.env.ISLAND_WPN_DIR) { ctx.handle('seenApps', async () => []); return; }
     const dir = process.env.ISLAND_WPN_DIR || path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Windows', 'Notifications');
     if (!dir || (!process.env.ISLAND_WPN_DIR && !process.env.LOCALAPPDATA)) return;
 
