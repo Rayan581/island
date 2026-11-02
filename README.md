@@ -65,6 +65,16 @@ Robo's eyes show moods, all done with CSS (no layout change, nothing heavy):
 
 Now and then Robo double-blinks, or glances to the side when the cursor is still. Turn it all off under Settings → Features.
 
+### Game mode
+
+While a fullscreen game or video is in front, the island hides itself (it is not just covered: the keep-on-top timer is paused too), and shows it again about 1.5 s after you leave fullscreen. After a game session of at least 2 minutes the pill shows "Played 1h 12m · Game" for 6 s. Alt-tabbing out and back within 20 s counts as one session.
+
+- Detection runs in the C# helper (`helper/Features/Fullscreen.cs`): `SHQueryUserNotificationState` plus a check that the foreground window exactly covers the primary monitor. **Rebuild the helper** (`npm run build:helper`) after updating; without it the feature stays silent and Settings says so.
+- Settings → Features → Game mode: "Also hide for fullscreen video and browsers" (on by default; off = only games hide) and "Show play time afterwards".
+- Games are anything fullscreen that is not a known browser, video player, meeting or office app. The name is the window title when it is short, otherwise the exe name. Borderless-windowed games are detected by their window; a maximized normal window is never counted.
+- No FPS counter: that needs injecting into the game.
+- Fullscreen on a second monitor does not hide the island, which lives on the primary one.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
