@@ -75,6 +75,14 @@ While a fullscreen game or video is in front, the island hides itself (it is not
 - No FPS counter: that needs injecting into the game.
 - Fullscreen on a second monitor does not hide the island, which lives on the primary one.
 
+### Clipboard & screenshots
+
+Copy something and the pill shows a short "Copied" peek with the first line and the length. The **Clipboard** tab keeps the last 20 texts (click one to copy it back) and the last 6 images, with Copy and Show in folder buttons on each thumbnail; drag a thumbnail into another app to drop the file there.
+
+- **Screenshots.** Island can't see key presses, so a capture counts as a *Screenshot* when a new image appears in `Pictures\Screenshots` (Snipping Tool's auto-save, Win+PrtScn) or when a clipboard image is exactly the size of a display (PrtScn). Other clipboard images show as "Image copied". With Win+Shift+S, turn on "Automatically save original screenshots" in the Snipping Tool to get the Screenshot label.
+- **Privacy.** Text stays in memory only, is never logged, and is gone when Island quits. Images are saved as PNGs in `%APPDATA%\Island\clipboard` (the newest 10 are kept) so they can be dragged out. Anything a password manager flags (`ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory` = 0, `CanUploadToCloudClipboard` = 0, `Clipboard Viewer Ignore`) is skipped without being read.
+- **Settings.** Features, Clipboard & screenshots: turn the text peek off (images always peek) or turn history off.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
