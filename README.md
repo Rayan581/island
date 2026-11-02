@@ -45,6 +45,14 @@ When a download finishes, the pill shows its file icon, name and size for a few 
 
 Plug in or unplug a laptop and the pill plays a short charging animation: a battery that fills from empty with a green glow, a lightning bolt and the percentage. Unplugging shows the level in white. At 20% (adjustable from 10% to 30% in Settings → Features) and again at 10% while discharging, the pill warns "Low battery" once per discharge cycle, and an amber battery badge stays on the pill while the level is under the threshold. Desktop PCs have no battery, so the feature stays silent there.
 
+### Mic and camera
+
+A small orange dot appears in the pill while any app uses the microphone, and a green one while the camera is in use. When a call app has the mic (Discord, Teams, Zoom, Slack, Skype, WhatsApp, Telegram, or a browser, which may be Meet), the pill becomes "In call · Discord" with a timer, and hovering opens the **Call** tab with a big mute button. **Ctrl+Alt+M** toggles mute from anywhere.
+
+- Detection reads Windows' privacy "consent store" in the registry once a second (the same data behind the tray mic/camera indicator), so it needs the helper (`npm run build:helper`). Nothing is recorded or sent anywhere.
+- Mute switches the default communications microphone at the system level, so it affects every app.
+- If both the mic and the camera are in use the badge shows the orange mic dot.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
