@@ -61,7 +61,7 @@ function summarize(msg) {
 }
 
 function start(ctx) {
-  if (process.platform !== 'win32') return () => {}; // detection lives in the Windows helper
+  if (process.platform !== 'win32') { ctx.handle('state', async () => ({ helper: false })); return () => {}; } // detection lives in the Windows helper
   let stopped = false, registered = false, warned = false, gs = null, last = null, seenMsg = false;
 
   ctx.helper.on('miccam', (msg) => {
