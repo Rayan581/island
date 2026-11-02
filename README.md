@@ -31,6 +31,16 @@ The Settings tab, with a live preview of the collapsed pill:
 
 ![Settings](docs/screenshots/14-settings.png)
 
+## Features
+
+### Download done
+
+When a download finishes, the pill shows its file icon, name and size for a few seconds; hover to open the **Downloads** tab, which lists the last 8 with **Open**, **Show in folder**, and drag-out into Explorer, a browser or a chat. A blue download badge stays on the pill for a minute afterwards.
+
+- Island watches your Downloads folder (not subfolders). A file counts as done when it has its final name (not `.crdownload`, `.part`, `.tmp`…), is not empty, and its size has not changed for 1.5 seconds. Files that were already there when Island started are ignored.
+- Only files whose download finished while Island was running are listed; nothing is read or uploaded, and the list is kept in memory only.
+- Turn it off under Settings → Features.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
