@@ -3,3 +3,4 @@ dist/
 release/
 helper/bin/
 helper/obj/
+.claude/
