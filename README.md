@@ -9,6 +9,28 @@ A Dynamic Island for Windows. A small black pill sits at the top of your screen 
 - **Focus timer.** 15/25/50-minute sessions, with a notification when one ends.
 - **All at once.** When several things are live, the pill shows the most important one and small badges for the rest.
 
+## Screenshots
+
+The collapsed pill changes with what is happening. Claude Code running, lyrics, and the volume bar:
+
+| Claude Code running | Lyrics | Volume |
+|---|---|---|
+| ![Claude Code running](docs/screenshots/01-pill-claude-running.png) | ![Lyrics in the pill](docs/screenshots/03-pill-lyrics.png) | ![Volume](docs/screenshots/05-pill-volume.png) |
+
+The notch style, flush with the top edge of the screen, with Robo's eyes:
+
+![Notch style](docs/screenshots/13-notch.png)
+
+Hover to open it:
+
+| Home | Claude Code | Music | Focus timer |
+|---|---|---|---|
+| ![Home](docs/screenshots/07-home.png) | ![Claude Code view](docs/screenshots/08-claude.png) | ![Music view](docs/screenshots/10-music.png) | ![Focus timer](docs/screenshots/12-focus.png) |
+
+The Settings tab, with a live preview of the collapsed pill:
+
+![Settings](docs/screenshots/14-settings.png)
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
