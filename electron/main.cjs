@@ -65,10 +65,26 @@ function setSuppressed(reason, on) {
   if (on) suppressed.add(reason); else suppressed.delete(reason);
   applyVisibility();
 }
+let rebuildOnShow = false;
 function applyVisibility() {
   if (!win || win.isDestroyed()) return;
-  if (hidden || suppressed.size) { if (win.isVisible()) win.hide(); }
-  else { win.showInactive(); assertTop(); send('resync'); }
+  if (hidden || suppressed.size) {
+    if (win.isVisible()) win.hide();
+    if (suppressed.size) rebuildOnShow = true;
+    return;
+  }
+  if (rebuildOnShow) {
+    // After a game (fullscreen app) the old window stops receiving clicks even though Electron says it takes them, so
+    // coming back builds a fresh window instead of reviving the old one.
+    rebuildOnShow = false;
+    const old = win;
+    lastCursor = '';
+    createWindow(); // creates the new window first so the app never has zero windows (which would quit it)
+    old.destroy();
+    if (debug) console.log('[island] window rebuilt after game mode');
+    return;
+  }
+  win.showInactive(); assertTop(); send('resync');
 }
 function applyKeepOnTop() {
   clearInterval(topTimer);
