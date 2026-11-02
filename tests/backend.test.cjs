@@ -90,3 +90,19 @@ test('hook server receives the exact curl command Claude Code will run, with an 
   assert.deepStrictEqual(got, [{ hook_event_name: 'Stop', session_id: 's1' }]);
   server.close();
 });
+
+test('lyrics: a cached miss is retried when the caller asks for a fresh lookup', async () => {
+  const os = require('os'), path = require('path');
+  let calls = 0, found = false;
+  const fetchImpl = async () => { calls++; return found
+    ? { status: 200, ok: true, json: async () => [{ syncedLyrics: '[00:01.00] hi', duration: 200 }] }
+    : { status: 404, ok: false, json: async () => null }; };
+  const l = new Lyrics(path.join(os.tmpdir(), `lyr-${Date.now()}.json`), fetchImpl);
+  const t = { title: 'Song', artist: 'Artist', album: '', duration: 0 };
+  assert.strictEqual(await l.get(t), null);
+  const n = calls; found = true;
+  assert.strictEqual(await l.get(t), null, 'plain lookup still uses the cached miss');
+  assert.strictEqual(calls, n);
+  const res = await l.get({ ...t, fresh: true });
+  assert.strictEqual(res.lines[0].text, 'hi');
+});

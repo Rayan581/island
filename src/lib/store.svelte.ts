@@ -170,12 +170,21 @@ export class Store {
     return m.duration ? Math.min(Math.max(p, 0), m.duration) : Math.max(p, 0);
   }
 
-  async loadLyrics() {
+  /**
+   * A miss is often temporary: the player publishes the duration/album a moment after the title, or LRCLIB/the network
+   * hiccups. So a miss is retried a few times, with fresh metadata, before the pill settles on "no lyrics".
+   */
+  async loadLyrics(attempt = 0) {
     const m = this.music, key = m.key;
-    this.lyrics = null; this.lyricsState = 'loading';
-    const res = await (this.lyricsSource ?? this.api.lyrics)({ title: m.title, artist: m.artist, album: m.album, duration: m.duration }).catch(() => null);
+    if (attempt === 0) { this.lyrics = null; this.lyricsState = 'loading'; }
+    const res = await (this.lyricsSource ?? this.api.lyrics)({ title: m.title, artist: m.artist, album: m.album, duration: m.duration, fresh: attempt > 0 }).catch(() => null);
     if (this.music.key !== key) return;
-    if (!res) { this.lyricsState = 'missing'; return; }
+    if (!res) {
+      this.lyricsState = 'missing';
+      const delay = [2500, 8000, 25000][attempt];
+      if (delay !== undefined) setTimeout(() => { if (this.music.key === key && this.lyricsState === 'missing') this.loadLyrics(attempt + 1); }, delay);
+      return;
+    }
     this.lyrics = res.lines; this.lyricsState = res.instrumental ? 'instrumental' : res.lines.length ? 'ready' : 'missing';
   }
 

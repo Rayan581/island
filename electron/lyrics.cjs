@@ -2,7 +2,8 @@
 const fs = require('fs');
 
 const UA = 'Island/0.1 (desktop dynamic island; https://github.com/)';
-const MISS_RETRY_MS = 7 * 24 * 3600 * 1000;
+const MISS_RETRY_MS = 6 * 3600 * 1000; // a miss may only mean the player hadn't published the duration/album yet
+const FETCH_TIMEOUT_MS = 8000;
 const MAX_ENTRIES = 800;
 
 function parseLRC(lrc) {
@@ -39,7 +40,7 @@ class Lyrics {
   async get(track) {
     if (!track?.title) return null;
     const k = this.key(track), hit = this.cache[k];
-    if (hit && (hit.lines || Date.now() - hit.at < MISS_RETRY_MS)) return hit.lines ? hit : null;
+    if (hit && (hit.lines || (!track.fresh && Date.now() - hit.at < MISS_RETRY_MS))) return hit.lines ? hit : null;
     if (this.inflight.has(k)) return this.inflight.get(k);
     const p = this.lookup(track).then((res) => {
       this.cache[k] = { at: Date.now(), ...(res || {}) }; this.save(); this.inflight.delete(k);
@@ -49,7 +50,7 @@ class Lyrics {
     return p;
   }
   async api(path, params) {
-    const r = await this.fetch(`https://lrclib.net/api/${path}?${new URLSearchParams(params)}`, { headers: { 'User-Agent': UA } });
+    const r = await this.fetch(`https://lrclib.net/api/${path}?${new URLSearchParams(params)}`, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (r.status === 404) return null;
     if (!r.ok) throw new Error(`LRCLIB ${r.status}`);
     return r.json();

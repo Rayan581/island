@@ -37,7 +37,7 @@ export interface IslandAPI {
   ignoreMouse(v: boolean): void;
   media(cmd: 'toggle' | 'next' | 'prev' | 'seek', arg?: number): void;
   config(): Promise<Config>;
-  lyrics(track: { title: string; artist: string; album: string; duration: number }): Promise<LyricsResult | null>;
+  lyrics(track: { title: string; artist: string; album: string; duration: number; fresh?: boolean }): Promise<LyricsResult | null>;
   onConfig(cb: (c: Config) => void): () => void;
   onClaude(cb: (e: HookEvent) => void): () => void;
   onMedia(cb: (e: MediaEvent) => void): () => void;
