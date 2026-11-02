@@ -2,6 +2,8 @@
 export type Mood = 'normal' | 'squint' | 'happy' | 'surprised' | 'sleepy';
 
 export const robo = $state({
+  /** True while the Robo feature is switched on (the busy pills show eyes instead of icons only then). */
+  on: false,
   /** The mood the eyes show right now (always 'normal' while the feature is off). */
   mood: 'normal' as Mood,
   /** When the active transient mood (happy / surprised) ends, ms epoch; 0 when none. */

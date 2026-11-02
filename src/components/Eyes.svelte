@@ -1,8 +1,9 @@
 <script lang="ts">
   import { cursor } from '../lib/cursor.svelte';
-  import { robo } from '../lib/mood.svelte';
+  import { robo, type Mood } from '../lib/mood.svelte';
 
-  let { size = 1, follow = true }: { size?: number; follow?: boolean } = $props();
+  let { size = 1, follow = true, mood = undefined }: { size?: number; follow?: boolean; mood?: Mood } = $props();
+  const shown = $derived(mood ?? robo.mood);
   let el: HTMLElement | undefined = $state();
   let dx = $state(0), dy = $state(0);
   let blinking = $state<'' | 'one' | 'two'>('');
@@ -32,7 +33,7 @@
     blinkTimer = window.setTimeout(() => (blinking = ''), 800);
   });
 </script>
-<span class="eyes {robo.mood}" class:one={blinking === 'one'} class:two={blinking === 'two'} bind:this={el} style:--k={size} style:--dx="{dx.toFixed(2)}px" style:--dy="{dy.toFixed(2)}px" aria-label="Robo"><i></i><i></i></span>
+<span class="eyes {shown}" class:one={blinking === 'one'} class:two={blinking === 'two'} bind:this={el} style:--k={size} style:--dx="{dx.toFixed(2)}px" style:--dy="{dy.toFixed(2)}px" aria-label="Robo"><i></i><i></i></span>
 <style>
   .eyes { --c: #c4f5d2; --e: cubic-bezier(.3, .9, .3, 1);
           display: inline-flex; gap: calc(6px * var(--k)); align-items: center; transform: translate(var(--dx, 0), var(--dy, 0)); transition: transform .14s ease-out; }

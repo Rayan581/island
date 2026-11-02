@@ -4,6 +4,7 @@
   import type { PillKind, Badge } from '../lib/pill';
   import { clock } from '../lib/format';
   import Eyes from './Eyes.svelte';
+  import { robo } from '../lib/mood.svelte';
   import Eq from './Eq.svelte';
   import Art from './Art.svelte';
   import Icon from './Icon.svelte';
@@ -30,15 +31,15 @@
     <span class="text ellipsis">Focus complete</span>
     <span class="trail tnum focus-c">0:00</span>
   {:else if kind === 'attention' && c}
-    <span class="ico attn"><Icon name="alert" size={15} /></span>
+    {#if robo.on}<Eyes size={0.8} follow={store.settings.eyesFollow} mood="surprised" />{:else}<span class="ico attn"><Icon name="alert" size={15} /></span>{/if}
     <span class="text ellipsis"><b class="attn">Needs you</b> <span class="dim">· {c.project}</span></span>
   {:else if kind === 'running' && c}
-    <span class="spinner"></span>
+    {#if robo.on}<Eyes size={0.8} follow={store.settings.eyesFollow} mood="squint" />{:else}<span class="spinner"></span>{/if}
     <span class="text ellipsis">{toolLabel(c.tool)} <span class="dim">· {c.project}</span></span>
     {#if store.runningCount > 1}<span class="count">+{store.runningCount - 1}</span>{/if}
     <span class="trail tnum">{clock(store.elapsed(c))}</span>
   {:else if kind === 'done' && c}
-    <span class="ico done-c"><Icon name="check" size={15} /></span>
+    {#if robo.on}<Eyes size={0.8} follow={store.settings.eyesFollow} mood="happy" />{:else}<span class="ico done-c"><Icon name="check" size={15} /></span>{/if}
     <span class="text ellipsis"><b class="done-c">Done</b> <span class="dim">· {c.project}</span></span>
     <span class="trail tnum dim">{clock(store.elapsed(c))}</span>
   {:else if kind === 'focus'}

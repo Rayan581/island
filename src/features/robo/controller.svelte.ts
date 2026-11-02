@@ -38,6 +38,7 @@ export function startRobo(ctx: FeatureCtx) {
         enabled: ctx.enabled, claudeRunning: ctx.store.runningCount > 0, hour: new Date(wall).getHours(),
         idleMs: wall - lastMove, sleepyAtNight: roboSettings.sleepyAtNight
       };
+      if (robo.on !== ctx.enabled) robo.on = ctx.enabled;
       const mood = resolveMood(inputs, transient, wall);
       if (robo.mood !== mood) robo.mood = mood;
       const until = inputs.enabled && transient && transient.until > wall ? transient.until : 0;
