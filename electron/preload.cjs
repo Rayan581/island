@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('island', {
   onCursor: on('cursor'),
   onCtrl: on('ctrl'),
   onFeature: on('feature'),
+  onResync: on('resync'),
   /** Real path of a File from a drop event (File.path no longer exists in Electron 32+). */
   pathForFile: (file) => { try { return webUtils.getPathForFile(file); } catch { return ''; } },
   featureCall: (id, action, arg) => ipcRenderer.invoke('feature:call', id, action, arg),

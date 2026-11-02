@@ -12,7 +12,7 @@ export function getApi(): IslandAPI {
   return {
     getSettings: async () => local,
     setSettings: async (patch) => (local = { ...local, ...patch }),
-    onSettings: noop, onCursor: noop, onCtrl: noop, onFeature: noop, featureCall: async () => null, pathForFile: () => '',
+    onSettings: noop, onCursor: noop, onCtrl: noop, onFeature: noop, onResync: noop, featureCall: async () => null, pathForFile: () => '',
     ignoreMouse: () => {}, media: () => {}, config: async () => cfg, lyrics: async () => null,
     onConfig: noop, onClaude: noop, onMedia: noop, onVolume: noop
   };

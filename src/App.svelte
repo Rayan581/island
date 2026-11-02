@@ -37,46 +37,66 @@
   }
 
   // ---- hover to open; the window lets clicks through everywhere except the island itself ----
+  // The window is click-through ("ignore mouse") except while the pointer is over the island. Rather than trusting
+  // mouseenter/mouseleave (which go stale when the window is hidden and shown again, e.g. by game mode), every mouse
+  // move (Electron forwards them even while click-through) is hit-tested against the island's real geometry, so any
+  // stuck state heals itself on the next move.
   // Hold Ctrl while the pointer is over the island and clicks (and hover) pass through to the app underneath.
-  // A non-focusable window never sees key events, but the forwarded mouse events carry the Ctrl state.
-  let openTimer = 0, closeTimer = 0, hovering = false, passing = $state(false);
+  let islandEl: HTMLElement | undefined = $state();
+  let openTimer = 0, closeTimer = 0, hovering = false, passing = $state(false), ignoring = true;
+  let px = -1, py = -1; // last pointer position in window coordinates (-1 = unknown / outside)
   function startOpen() {
     if (store.expanded) return;
+    clearTimeout(openTimer);
     openTimer = window.setTimeout(() => {
       const f = pill.feature; // a feature that owns the pill opens to its own tab
       if (f?.panel && f.pill?.openTab !== false) store.view = `f:${f.id}`;
       store.expanded = true;
     }, 110);
   }
-  function setPass(on: boolean) {
-    if (on === passing) return;
-    passing = on;
-    api.ignoreMouse(on);
-    if (on) clearTimeout(openTimer); else { clearTimeout(closeTimer); startOpen(); }
+  function collapse() {
+    if (store.expanded) store.markSeen();
+    store.expanded = false;
+    store.selectedSession = null;
+  }
+  function overIsland(x: number, y: number) {
+    if (!islandEl || x < 0) return false;
+    for (const el of [islandEl, ...islandEl.querySelectorAll('.ear')]) {
+      const r = el.getBoundingClientRect();
+      if (x >= r.left - 1 && x <= r.right + 1 && y >= r.top - 1 && y <= r.bottom + 1) return true;
+    }
+    return false;
   }
   // Ctrl comes from the native watcher when it is running (works with a still pointer); mouse events are the fallback.
   let nativeCtrl = false, haveNative = false, mouseCtrl = false;
   const ctrlHeld = () => (haveNative ? nativeCtrl : mouseCtrl);
-  api.onCtrl((down) => { haveNative = true; nativeCtrl = down; if (hovering) setPass(ctrlHeld()); });
-  window.addEventListener('mousemove', (e) => { mouseCtrl = e.ctrlKey; if (hovering) setPass(ctrlHeld()); });
-  function enter(e: MouseEvent) {
-    hovering = true;
-    clearTimeout(closeTimer);
-    mouseCtrl = e.ctrlKey;
-    passing = ctrlHeld();
-    api.ignoreMouse(passing);
-    if (!passing) startOpen();
+
+  /** Re-evaluate hover, Ctrl pass-through and click-through from the pointer position. `force` re-sends click-through. */
+  function updatePointer(force = false) {
+    const over = overIsland(px, py), pass = over && ctrlHeld();
+    if (over && !hovering) { hovering = true; clearTimeout(closeTimer); if (!pass) startOpen(); }
+    else if (!over && hovering) { hovering = false; clearTimeout(openTimer); clearTimeout(closeTimer); closeTimer = window.setTimeout(collapse, 380); }
+    if (pass !== passing) {
+      passing = pass;
+      if (pass) clearTimeout(openTimer); else if (over) { clearTimeout(closeTimer); startOpen(); }
+    }
+    const ignore = !(over && !pass);
+    if (force || ignore !== ignoring) { ignoring = ignore; api.ignoreMouse(ignore); }
   }
-  function leave() {
-    hovering = false; passing = false;
-    clearTimeout(openTimer);
-    api.ignoreMouse(true);
-    closeTimer = window.setTimeout(() => {
-      if (store.expanded) store.markSeen();
-      store.expanded = false;
-      store.selectedSession = null;
-    }, 380);
-  }
+  window.addEventListener('mousemove', (e) => { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); });
+  document.addEventListener('mouseleave', () => { px = py = -1; updatePointer(); }); // left the window entirely
+  api.onCtrl((down) => { haveNative = true; nativeCtrl = down; updatePointer(); });
+  // Something else changed click-through behind our back (the shelf's drop gate, a dialog): re-assert ours.
+  window.addEventListener('island:resync', () => updatePointer(true));
+  // The window was hidden and shown again: the old pointer position means nothing now.
+  api.onResync(() => { px = py = -1; updatePointer(true); });
+  // During an OS file drag no mouse moves arrive, only dragover (and only while the shelf lets the drag in).
+  let dragAt = 0;
+  document.addEventListener('dragover', (e) => { dragAt = Date.now(); px = e.clientX; py = e.clientY; updatePointer(); });
+  // Belt and braces: re-send the click-through state every couple of seconds (not mid-drag).
+  setInterval(() => { if (Date.now() - dragAt > 1500) updatePointer(true); }, 2000);
+  function enter(e: MouseEvent) { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); }
+  function leave(e: MouseEvent) { px = e.clientX; py = e.clientY; updatePointer(); }
 
   const pill = $derived(pillState(store));
   const a = $derived(store.accent);
@@ -108,6 +128,7 @@
 </script>
 
 <div
+  bind:this={islandEl}
   class="island"
   class:open={store.expanded}
   class:notch

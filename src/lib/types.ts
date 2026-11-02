@@ -35,6 +35,8 @@ export interface IslandAPI {
   onSettings(cb: (s: Settings) => void): () => void;
   /** Cursor position relative to the island window, or null when it is far away. */
   /** Ctrl key held down anywhere (read natively, since the island window never has focus). */
+  /** The window was hidden and shown again: re-check where the pointer is. */
+  onResync(cb: () => void): () => void;
   onFeature(cb: (m: { id: string; data: unknown }) => void): () => void;
   featureCall(id: string, action: string, arg?: unknown): Promise<unknown>;
   pathForFile(file: File): string;

@@ -28,9 +28,8 @@ function init(ctx: FeatureCtx) {
   });
 
   function resync() {
-    const el = islandEl();
-    const hover = !!el?.matches(':hover'), passing = !!el?.classList.contains('passing');
-    ctx.api.ignoreMouse(!(hover && !passing));
+    // App.svelte owns click-through and hit-tests the real pointer position; ask it to re-assert.
+    window.dispatchEvent(new Event('island:resync'));
   }
 
   // ---- 1. tell Electron where the island is, so it can let a file drag in (see electron/features/shelf/gate.cjs) ----

@@ -57,7 +57,7 @@ function setSuppressed(reason, on) {
 function applyVisibility() {
   if (!win || win.isDestroyed()) return;
   if (hidden || suppressed.size) { if (win.isVisible()) win.hide(); }
-  else { win.showInactive(); assertTop(); }
+  else { win.showInactive(); assertTop(); send('resync'); }
 }
 function applyKeepOnTop() {
   clearInterval(topTimer);
