@@ -1,7 +1,7 @@
 /** Built-in tabs, or `f:<feature id>` for a feature's own tab. */
 export type View = 'home' | 'claude' | 'music' | 'focus' | 'settings' | `f:${string}`;
 
-export interface Config { demo: boolean; platform: string; helper: string; claudeConnected: boolean; hookPort: number }
+export interface Config { debug?: boolean; demo: boolean; platform: string; helper: string; claudeConnected: boolean; hookPort: number }
 
 export interface HookEvent {
   hook_event_name: string; session_id?: string; cwd?: string; prompt?: string; message?: string;

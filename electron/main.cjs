@@ -20,13 +20,15 @@ function setClickThrough(v, force = false) {
   v = !!v;
   if (!win || win.isDestroyed() || (v === clickThrough && !force)) return;
   clickThrough = v;
+  if (debug) console.log(`[island] click-through ${v ? 'ON (clicks go to apps below)' : 'OFF (island takes clicks)'}${force ? ' (forced)' : ''}`);
   win.setIgnoreMouseEvents(v, { forward: true });
 } // room for the expanded island, its curved ears and its shadow
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
 const send = (ch, data) => { if (win && !win.isDestroyed()) win.webContents.send(ch, data); };
-const config = () => ({ demo, platform: process.platform, helper: helperStatus, claudeConnected: claude.isInstalled(), hookPort: claude.PORT });
+let debug = !!process.env.ISLAND_DEBUG;
+const config = () => ({ debug, demo, platform: process.platform, helper: helperStatus, claudeConnected: claude.isInstalled(), hookPort: claude.PORT });
 
 const RELAY_LABELS = {
   connected: 'connected', waiting: 'waiting for the chat', offline: 'offline', 'needs-token': 'needs a GitHub token',
@@ -108,6 +110,12 @@ function createWindow() {
   placeWindow();
   if (DEV) win.loadURL('http://localhost:5173'); else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   win.once('ready-to-show', () => { if (!hidden && !suppressed.size) win.showInactive(); });
+  // Renderer errors (and, in debug mode, all of its logs) go to the terminal that runs Island.
+  win.webContents.on('console-message', (e, lvl, msg) => {
+    const level = typeof e?.level === 'string' ? e.level : ['debug', 'info', 'warning', 'error'][lvl] || 'info';
+    const message = typeof e?.message === 'string' ? e.message : msg;
+    if (debug || level === 'error' || level === 'warning') console.log(`[ui ${level}] ${message}`);
+  });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
 }
 
@@ -126,6 +134,8 @@ function buildTray() {
     { label: `Cloud chat relay: ${RELAY_LABELS[relayStatus] || relayStatus}`, enabled: false },
     { label: 'Relay settings…', click: openRelaySettings },
     { label: 'Hide Island (Ctrl+Alt+I)', type: 'checkbox', checked: hidden, click: (i) => setHidden(i.checked) },
+    { label: 'Debug logging', type: 'checkbox', checked: debug, click: (i) => { debug = i.checked; send('config', config()); } },
+    { label: 'Open DevTools', click: () => win && win.webContents.openDevTools({ mode: 'detach' }) },
     { label: 'Demo mode', type: 'checkbox', checked: demo, click: (i) => { demo = i.checked; send('config', config()); } },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
     { type: 'separator' },

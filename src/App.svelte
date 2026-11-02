@@ -85,6 +85,7 @@
       if (pass) clearTimeout(openTimer); else if (over) { clearTimeout(closeTimer); startOpen(); }
     }
     const ignore = !(over && !pass);
+    if (store.config.debug && (ignore !== ignoring || mode !== 'normal')) console.log(`[pointer] ${mode} at ${Math.round(px)},${Math.round(py)} over=${over} ctrl=${pass} -> click-through ${ignore}`);
     if (mode !== 'normal' || ignore !== ignoring) { ignoring = ignore; api.ignoreMouse(ignore, mode === 'force'); }
   }
   window.addEventListener('mousemove', (e) => { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); });
@@ -99,6 +100,12 @@
   document.addEventListener('dragover', (e) => { dragAt = Date.now(); px = e.clientX; py = e.clientY; updatePointer(); });
   // Belt and braces: re-send the click-through state every couple of seconds (not mid-drag).
   setInterval(() => { if (Date.now() - dragAt > 1500) updatePointer('resend'); }, 2000);
+  // Debug: show whether clicks reach the island at all, and what they land on.
+  for (const t of ['mousedown', 'click'] as const) document.addEventListener(t, (e) => {
+    if (!store.config.debug) return;
+    const el = e.target as HTMLElement;
+    console.log(`[${t}] at ${e.clientX},${e.clientY} on <${el?.tagName?.toLowerCase()} class="${el?.className}"> label=${el?.closest('button')?.getAttribute('aria-label') ?? '-'} view=${store.view}`);
+  }, true);
   function enter(e: MouseEvent) { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); }
   function leave(e: MouseEvent) { px = e.clientX; py = e.clientY; updatePointer(); }
 
