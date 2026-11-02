@@ -41,6 +41,10 @@ When a download finishes, the pill shows its file icon, name and size for a few 
 - Only files whose download finished while Island was running are listed; nothing is read or uploaded, and the list is kept in memory only.
 - Turn it off under Settings → Features.
 
+### Battery and charging
+
+Plug in or unplug a laptop and the pill plays a short charging animation: a battery that fills from empty with a green glow, a lightning bolt and the percentage. Unplugging shows the level in white. At 20% (adjustable from 10% to 30% in Settings → Features) and again at 10% while discharging, the pill warns "Low battery" once per discharge cycle, and an amber battery badge stays on the pill while the level is under the threshold. Desktop PCs have no battery, so the feature stays silent there.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
