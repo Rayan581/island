@@ -83,6 +83,15 @@ Copy something and the pill shows a short "Copied" peek with the first line and 
 - **Privacy.** Text stays in memory only, is never logged, and is gone when Island quits. Images are saved as PNGs in `%APPDATA%\Island\clipboard` (the newest 10 are kept) so they can be dragged out. Anything a password manager flags (`ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory` = 0, `CanUploadToCloudClipboard` = 0, `Clipboard Viewer Ignore`) is skipped without being read.
 - **Settings.** Features, Clipboard & screenshots: turn the text peek off (images always peek) or turn history off.
 
+### Notification mirror
+
+Notifications from the apps you choose (by default WhatsApp, Discord, Gmail, Mail, Telegram, Slack and Teams) slide into the pill for 5 seconds (3 seconds each when several arrive together). The **Notifications** tab keeps the last 20 with app, title, a two-line body and time. Choose the apps under *Settings → Features → Notification mirror*; apps Island has seen but doesn't know are listed there too and can be switched on.
+
+- **How it works.** Windows keeps every toast in `%LOCALAPPDATA%\Microsoft\Windows\Notifications\wpndatabase.db` (SQLite, WAL mode, held open by Windows). Every 2 seconds, and only if the database or its `-wal` file changed, Island copies the files to a temporary folder, reads the rows that are new since the last poll with Node's built-in `node:sqlite`, and deletes the copy again. Notifications that were already there at launch are never replayed. If Windows changes the table layout, the feature turns itself off and says why in Settings and in the tab.
+- **Privacy.** Message text is kept in memory only. It is never written to disk by Island (apart from the short-lived database copy above, which is removed immediately) and never logged. Closing Island or clearing the tab discards it.
+- **Island can't hide Windows' own banners.** To see notifications only in the island, turn off *Show notification banners* for those apps in Windows Settings → System → Notifications, but keep *Show notifications in notification center* on, or Windows never writes them to the database.
+- **Browsers.** Chrome/Edge notifications are off by default; a Gmail tab (notifications from `mail.google.com`) is recognised as Gmail.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
