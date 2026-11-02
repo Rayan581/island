@@ -1,0 +1,1 @@
+{ "name": "session-relay", "version": "0.1.0", "description": "Mirrors this chat's live status (running tool, finished) to a private GitHub repo so the Island desktop app can show it in its pill." }

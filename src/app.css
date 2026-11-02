@@ -1,0 +1,22 @@
+:root {
+  --ink: #f5f5f7; --mute: #9b9ba3; --faint: #5c5c66; --line: rgba(255,255,255,.09); --chip: rgba(255,255,255,.08);
+  --claude: #d97757; --claude-deep: #6e3524; --done: #3b82f6; --done-deep: #1e3a8a; --attn: #f5b544;
+  --focus: #b06cf2; --focus-deep: #4c1d7a;
+  --ease: cubic-bezier(.32, 1.25, .45, 1);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: transparent; overflow: hidden; color: var(--ink); font-size: 13px; line-height: 1.3; user-select: none; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; border-radius: 8px; }
+.tnum { font-variant-numeric: tabular-nums; }
+.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } }
+
+/* Notch style: the curved "ears" that blend the pill into the top edge of the screen. */
+.ear { position: absolute; top: 0; width: var(--ear, 0px); height: var(--ear, 0px); pointer-events: none; }
+.ear.l { left: calc(var(--ear, 0px) * -1); background: radial-gradient(circle at 0 100%, transparent calc(var(--ear, 0px) - .6px), #000 var(--ear, 0px)); }
+.ear.r { right: calc(var(--ear, 0px) * -1); background: radial-gradient(circle at 100% 100%, transparent calc(var(--ear, 0px) - .6px), #000 var(--ear, 0px)); }

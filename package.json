@@ -1,0 +1,53 @@
+{
+  "name": "island",
+  "productName": "Island",
+  "version": "0.1.0",
+  "description": "A Dynamic Island for Windows: Claude Code live status, music with synced lyrics, and a focus timer",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env ISLAND_DEV=1 electron .\"",
+    "demo": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env ISLAND_DEV=1 electron . --demo\"",
+    "build": "vite build",
+    "build:helper": "dotnet publish helper/IslandHelper.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o helper/bin",
+    "start": "vite build && electron .",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "node --test tests/*.test.cjs",
+    "dist": "npm run build && npm run build:helper && electron-builder --win"
+  },
+  "build": {
+    "appId": "dev.ryn.island",
+    "productName": "Island",
+    "files": [
+      "dist/**",
+      "electron/**",
+      "build/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "helper/bin",
+        "to": "helper",
+        "filter": [
+          "IslandHelper.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    }
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@tsconfig/svelte": "^5.0.8",
+    "concurrently": "^9.2.5",
+    "cross-env": "^7.0.3",
+    "electron": "^38.8.6",
+    "electron-builder": "^26.18.0",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.8",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "wait-on": "^8.0.5"
+  }
+}
