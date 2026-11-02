@@ -131,3 +131,17 @@ test('gate: errors from the window are swallowed and stop() always restores', ()
   g.setRect(RECT, false);
   assert.doesNotThrow(() => g.setButton(true));
 });
+
+test('gate: does not touch click-through when the island already takes clicks (a click on an open island)', () => {
+  const { createGate } = require('../electron/features/shelf/gate.cjs');
+  const calls = [];
+  let t = 0;
+  const g = createGate({
+    getCursor: () => ({ x: 360, y: 20 }), getBounds: () => ({ x: 0, y: 0, width: 700, height: 400 }),
+    setIgnore: (v) => calls.push(v), isClickThrough: () => false, notify: () => calls.push('resync'),
+    now: () => t, setTimer: () => 1, clearTimer: () => {}
+  });
+  g.setRect({ x: 200, y: 0, w: 300, h: 40 }, false);
+  g.setButton(true); t += 50; g.tick(); g.setButton(false);
+  assert.deepStrictEqual(calls, [], 'no click-through changes, no resync');
+});

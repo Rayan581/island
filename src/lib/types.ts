@@ -42,7 +42,8 @@ export interface IslandAPI {
   pathForFile(file: File): string;
   onCtrl(cb: (down: boolean) => void): () => void;
   onCursor(cb: (p: { x: number; y: number } | null) => void): () => void;
-  ignoreMouse(v: boolean): void;
+  /** Click-through on/off. Repeats are ignored by the main process unless `force`. */
+  ignoreMouse(v: boolean, force?: boolean): void;
   media(cmd: 'toggle' | 'next' | 'prev' | 'seek', arg?: number): void;
   config(): Promise<Config>;
   lyrics(track: { title: string; artist: string; album: string; duration: number; fresh?: boolean }): Promise<LyricsResult | null>;

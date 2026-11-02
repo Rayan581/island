@@ -12,7 +12,16 @@ const { loadFeatures } = require('./features/index.cjs');
 const DEV = !!process.env.ISLAND_DEV;
 let demo = process.argv.includes('--demo');
 let win, tray, helper, lyrics, relay, settings, relayConfigPath, topTimer, cursorTimer, hidden = false, suppressed = new Set(), stopFeatures, helperListeners = new Map(), lastCursor = '', helperStatus = 'starting', relayStatus = 'starting';
-const WIN_W = 700, WIN_H = 400; // room for the expanded island, its curved ears and its shadow
+const WIN_W = 700, WIN_H = 400;
+// One owner for click-through. Changing it on Windows while a mouse button is down can swallow the click, so a call
+// that wouldn't change anything is skipped unless `force` (used after the window was hidden and shown again).
+let clickThrough = true;
+function setClickThrough(v, force = false) {
+  v = !!v;
+  if (!win || win.isDestroyed() || (v === clickThrough && !force)) return;
+  clickThrough = v;
+  win.setIgnoreMouseEvents(v, { forward: true });
+} // room for the expanded island, its curved ears and its shadow
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -95,7 +104,7 @@ function createWindow() {
   });
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
-  win.setIgnoreMouseEvents(true, { forward: true }); // renderer flips this while the pointer is on the island
+  clickThrough = true; win.setIgnoreMouseEvents(true, { forward: true }); // renderer flips this while the pointer is on the island
   placeWindow();
   if (DEV) win.loadURL('http://localhost:5173'); else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   win.once('ready-to-show', () => { if (!hidden && !suppressed.size) win.showInactive(); });
@@ -162,14 +171,14 @@ app.whenReady().then(() => {
   for (const ev of ['resume', 'unlock-screen']) powerMonitor.on(ev, () => { placeWindow(); assertTop(); });
   for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, assertTop);
   stopFeatures = loadFeatures({
-    app, ipcMain, getWin: () => win, send, settings, helper: () => helper, dataDir: app.getPath('userData'), setSuppressed,
+    app, ipcMain, getWin: () => win, send, settings, helper: () => helper, dataDir: app.getPath('userData'), setSuppressed, setClickThrough, isClickThrough: () => clickThrough,
     onHelper: (type, cb) => { if (!helperListeners.has(type)) helperListeners.set(type, []); helperListeners.get(type).push(cb); }
   });
   applyKeepOnTop();
   applyCursorPolling();
   try { globalShortcut.register('Control+Alt+I', () => setHidden(!hidden)); } catch { /* shortcut taken: the tray item still works */ }
 
-  ipcMain.on('ignore-mouse', (_e, ignore) => win.setIgnoreMouseEvents(!!ignore, { forward: true }));
+  ipcMain.on('ignore-mouse', (_e, ignore, force) => setClickThrough(ignore, !!force));
   ipcMain.on('media', (_e, cmd, arg) => {
     if (!['toggle', 'next', 'prev', 'seek'].includes(cmd)) return;
     helper.send(arg === undefined ? cmd : `${cmd} ${Number(arg)}`);

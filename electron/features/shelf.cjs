@@ -25,7 +25,8 @@ module.exports = {
     const gate = createGate({
       getCursor: () => screen.getCursorScreenPoint(),
       getBounds: () => { const w = win(); return w ? w.getContentBounds() : null; },
-      setIgnore: (on) => { const w = win(); if (w) w.setIgnoreMouseEvents(!!on, { forward: true }); },
+      setIgnore: (on) => ctx.setClickThrough(!!on),
+      isClickThrough: () => ctx.isClickThrough(),
       notify: (what) => { if (what === 'resync' && !stopped) ctx.send({ resync: true }); }
     });
 

@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-function loadFeatures({ app, ipcMain, getWin, send, settings, helper, onHelper, dataDir, setSuppressed = () => {} }) {
+function loadFeatures({ app, ipcMain, getWin, send, settings, helper, onHelper, dataDir, setSuppressed = () => {}, setClickThrough = () => {}, isClickThrough = () => true }) {
   const cfgDir = path.join(dataDir, 'features');
   try { fs.mkdirSync(cfgDir, { recursive: true }); } catch {}
   const handlers = new Map(); // `${id}:${action}` -> fn
@@ -37,6 +37,9 @@ function loadFeatures({ app, ipcMain, getWin, send, settings, helper, onHelper, 
       id, app, dataDir, config,
       /** Hide the island while `on` (e.g. a fullscreen game); several features can do this at once. */
       suppress: (on) => setSuppressed(id, !!on),
+      /** Change the window's click-through state (always use this, never win.setIgnoreMouseEvents directly). */
+      setClickThrough: (v) => setClickThrough(v),
+      isClickThrough: () => isClickThrough(),
       win: getWin,
       settings: () => settings.value,
       enabled: () => { const f = settings.value.features || {}; return f[id] ?? (mod.defaultEnabled ?? true); },

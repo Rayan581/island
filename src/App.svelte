@@ -71,8 +71,12 @@
   let nativeCtrl = false, haveNative = false, mouseCtrl = false;
   const ctrlHeld = () => (haveNative ? nativeCtrl : mouseCtrl);
 
-  /** Re-evaluate hover, Ctrl pass-through and click-through from the pointer position. `force` re-sends click-through. */
-  function updatePointer(force = false) {
+  /**
+   * Re-evaluate hover, Ctrl pass-through and click-through from the pointer position.
+   * 'resend' sends the click-through state even if unchanged (the main process skips no-ops); 'force' makes the main
+   * process apply it regardless (after the window was hidden and shown).
+   */
+  function updatePointer(mode: 'normal' | 'resend' | 'force' = 'normal') {
     const over = overIsland(px, py), pass = over && ctrlHeld();
     if (over && !hovering) { hovering = true; clearTimeout(closeTimer); if (!pass) startOpen(); }
     else if (!over && hovering) { hovering = false; clearTimeout(openTimer); clearTimeout(closeTimer); closeTimer = window.setTimeout(collapse, 380); }
@@ -81,20 +85,20 @@
       if (pass) clearTimeout(openTimer); else if (over) { clearTimeout(closeTimer); startOpen(); }
     }
     const ignore = !(over && !pass);
-    if (force || ignore !== ignoring) { ignoring = ignore; api.ignoreMouse(ignore); }
+    if (mode !== 'normal' || ignore !== ignoring) { ignoring = ignore; api.ignoreMouse(ignore, mode === 'force'); }
   }
   window.addEventListener('mousemove', (e) => { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); });
   document.addEventListener('mouseleave', () => { px = py = -1; updatePointer(); }); // left the window entirely
   api.onCtrl((down) => { haveNative = true; nativeCtrl = down; updatePointer(); });
   // Something else changed click-through behind our back (the shelf's drop gate, a dialog): re-assert ours.
-  window.addEventListener('island:resync', () => updatePointer(true));
+  window.addEventListener('island:resync', () => updatePointer('resend'));
   // The window was hidden and shown again: the old pointer position means nothing now.
-  api.onResync(() => { px = py = -1; updatePointer(true); });
+  api.onResync(() => { px = py = -1; updatePointer('force'); });
   // During an OS file drag no mouse moves arrive, only dragover (and only while the shelf lets the drag in).
   let dragAt = 0;
   document.addEventListener('dragover', (e) => { dragAt = Date.now(); px = e.clientX; py = e.clientY; updatePointer(); });
   // Belt and braces: re-send the click-through state every couple of seconds (not mid-drag).
-  setInterval(() => { if (Date.now() - dragAt > 1500) updatePointer(true); }, 2000);
+  setInterval(() => { if (Date.now() - dragAt > 1500) updatePointer('resend'); }, 2000);
   function enter(e: MouseEvent) { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); }
   function leave(e: MouseEvent) { px = e.clientX; py = e.clientY; updatePointer(); }
 

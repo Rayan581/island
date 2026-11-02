@@ -4,7 +4,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const on = (ch) => (cb) => { const f = (_e, d) => { cb(d); }; ipcRenderer.on(ch, f); return () => ipcRenderer.off(ch, f); };
 
 contextBridge.exposeInMainWorld('island', {
-  ignoreMouse: (v) => ipcRenderer.send('ignore-mouse', v),
+  ignoreMouse: (v, force) => ipcRenderer.send('ignore-mouse', v, !!force),
   media: (cmd, arg) => ipcRenderer.send('media', cmd, arg),
   config: () => ipcRenderer.invoke('config'),
   lyrics: (track) => ipcRenderer.invoke('lyrics', track),

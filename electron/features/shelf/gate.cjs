@@ -11,7 +11,7 @@ const POLL_MS = 50;
 const FORCE_MAX_MS = 20000; // never keep the window interactive longer than this in one go
 const POLL_MAX_MS = 60000;  // a button that seems to be held for a minute is a lost "up" event
 
-function createGate({ getCursor, getBounds, setIgnore, notify = () => {}, now = Date.now, setTimer = setInterval, clearTimer = clearInterval }) {
+function createGate({ getCursor, getBounds, setIgnore, isClickThrough = () => true, notify = () => {}, now = Date.now, setTimer = setInterval, clearTimer = clearInterval }) {
   let rect = null, passing = false, down = false, forced = false, locked = false;
   let timer = null, pollStart = 0, forcedAt = 0;
 
@@ -31,7 +31,9 @@ function createGate({ getCursor, getBounds, setIgnore, notify = () => {}, now = 
       const b = getBounds();
       if (!b) { release(); return; }
       const inside = inRect(toWindow(getCursor(), b), rect, MARGIN);
-      if (inside && !forced) { forced = true; forcedAt = t; setIgnore(false); }
+      // Only step in while the window is click-through; if the island already takes clicks (the pointer is on it),
+      // touching click-through mid-click would swallow that click.
+      if (inside && !forced) { if (!isClickThrough()) return; forced = true; forcedAt = t; setIgnore(false); }
       else if (!inside && forced) release();
     } catch { release(); }
   }
