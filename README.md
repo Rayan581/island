@@ -53,6 +53,18 @@ A small orange dot appears in the pill while any app uses the microphone, and a 
 - Mute switches the default communications microphone at the system level, so it affects every app.
 - If both the mic and the camera are in use the badge shows the orange mic dot.
 
+### Robo personality
+
+Robo's eyes show moods, all done with CSS (no layout change, nothing heavy):
+
+- **Focused**: flat, slightly slanted eyes while Claude is working.
+- **Happy**: upward arcs for 2.5 s after something finishes (Claude done, focus complete).
+- **Surprised**: wide, round eyes with a quick pop for 2 s when Claude needs you.
+- **Sleepy**: half-closed, dimmer eyes with a slow blink between 00:00 and 06:00 (switch off in Settings) or after
+  10 minutes without cursor movement.
+
+Now and then Robo double-blinks, or glances to the side when the cursor is still. Turn it all off under Settings → Features.
+
 ## Requirements
 
 - Windows 10 1809+ or Windows 11
