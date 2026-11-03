@@ -4,7 +4,7 @@ import { CLIP_ICON } from './icons';
 import ClipPill from './ClipPill.svelte';
 import ClipPanel from './ClipPanel.svelte';
 import ClipSettings from './ClipSettings.svelte';
-import { clip, addItem, type ClipItem } from './state.svelte';
+import { clip, addItem, restoreImages, type ClipItem, type ImageItem } from './state.svelte';
 
 const feature: IslandFeature = {
   id: 'clipboard',
@@ -15,7 +15,7 @@ const feature: IslandFeature = {
     ctx.getConfig<{ peekText?: boolean; keepHistory?: boolean }>().then((c) => {
       clip.cfg.peekText = c?.peekText !== false;
       clip.cfg.keepHistory = c?.keepHistory !== false;
-    }).catch(() => {});
+    }).catch(() => {}).then(() => ctx.call<ImageItem[]>('history')).then((items) => { if (items) restoreImages(items); }).catch(() => {});
     ctx.on((data) => {
       const it = data as ClipItem | null;
       if (!it || typeof it !== 'object' || !ctx.enabled) return;

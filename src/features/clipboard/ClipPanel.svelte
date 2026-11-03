@@ -10,6 +10,7 @@
   const empty = $derived(!clip.texts.length && !clip.images.length);
   const copied = (id: string) => clip.copiedId === id && clip.copiedUntil > now;
 
+  function clearEverything() { clearAll(); ctx.call('clearImages').catch(() => {}); }
   function copyText(t: TextItem) { markCopied(t.id); ctx.call('copyText', { id: t.id, text: t.text }).catch(() => {}); }
   function copyImage(i: ImageItem) { markCopied(i.id); ctx.call('copyImage', i.file).catch(() => {}); }
   function folder(i: ImageItem) { ctx.call('showInFolder', i.file).catch(() => {}); }
@@ -26,7 +27,7 @@
   <div class="wrap">
     <div class="bar">
       <span class="count tnum">{clip.images.length ? `${clip.images.length} ${clip.images.length === 1 ? 'image' : 'images'}` : ''}{clip.images.length && clip.texts.length ? ' · ' : ''}{clip.texts.length ? `${clip.texts.length} ${clip.texts.length === 1 ? 'snippet' : 'snippets'}` : ''}</span>
-      <button class="clear" onclick={clearAll} aria-label="Clear clipboard history"><Icon name={TRASH_ICON} size={11} />Clear</button>
+      <button class="clear" onclick={clearEverything} aria-label="Clear clipboard history and delete the saved image copies" title="Clears the history and deletes the image copies Island saved (your original files are never touched)"><Icon name={TRASH_ICON} size={11} />Clear</button>
     </div>
 
     {#if clip.images.length}

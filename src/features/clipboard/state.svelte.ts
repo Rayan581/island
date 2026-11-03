@@ -2,7 +2,7 @@ export interface TextItem { kind: 'text'; id: string; text: string; line: string
 export interface ImageItem { kind: 'image'; id: string; file: string; thumb: string; w: number; h: number; at: number; screenshot?: boolean; replaces?: string }
 export type ClipItem = TextItem | ImageItem;
 
-export const MAX_TEXTS = 20, MAX_IMAGES = 6;
+export const MAX_TEXTS = 20, MAX_IMAGES = 10;
 export const TEXT_PEEK_MS = 2500, IMAGE_PEEK_MS = 4000;
 
 export const clip = $state({
@@ -41,6 +41,13 @@ export function addItem(it: ClipItem): boolean {
   }
   clip.peek = shown; clip.peekUntil = Date.now() + IMAGE_PEEK_MS;
   return true;
+}
+
+/** Images saved by an earlier run (newest first); anything that arrived since startup stays on top. */
+export function restoreImages(items: ImageItem[]) {
+  if (!clip.cfg.keepHistory || !Array.isArray(items)) return;
+  const have = new Set(clip.images.map((i) => i.file));
+  clip.images = [...clip.images, ...items.filter((i) => i && i.kind === 'image' && !have.has(i.file))].slice(0, MAX_IMAGES);
 }
 
 export function clearAll() {

@@ -276,6 +276,42 @@ function start(ctx) {
     adopt();
     return true;
   });
+  /** Images saved by an earlier run, newest first, so the tab isn't empty after a restart. */
+  ctx.handle('history', async () => {
+    if (!keepHistory()) return [];
+    const out = [];
+    let names = [];
+    try { names = await fs.promises.readdir(imgDir); } catch { return out; }
+    const mine = names.filter((n) => /^\d{10,}(-\d+)?\.png$/.test(n)).sort().reverse().slice(0, KEEP_IMAGES);
+    for (const n of mine) {
+      try {
+        const file = path.join(imgDir, n);
+        const img = nativeImage.createFromPath(file);
+        if (img.isEmpty()) continue;
+        const { width: w, height: h } = img.getSize();
+        if (!w || !h || w * h > MAX_PIXELS) continue;
+        const { small, dataUrl } = thumbOf(img, w, h);
+        remember(file, small);
+        const screenshot = matchesDisplay(w, h, screen.getAllDisplays());
+        out.push({ kind: 'image', id: newId(), file, thumb: dataUrl, w, h, at: parseInt(n, 10), ...(screenshot ? { screenshot: true } : {}) });
+      } catch (e) { ctx.log('could not restore', n, e.message); }
+      await new Promise((r) => setImmediate(r)); // don't hog the main process while decoding
+    }
+    return out;
+  });
+  /** Delete the PNG copies Island saved (never the originals in Pictures\Screenshots). */
+  ctx.handle('clearImages', async () => {
+    let n = 0;
+    try {
+      for (const name of await fs.promises.readdir(imgDir)) {
+        if (!/^\d{10,}(-\d+)?\.png$/.test(name)) continue;
+        try { await fs.promises.unlink(path.join(imgDir, name)); n++; } catch { /* in use or already gone */ }
+      }
+    } catch { /* folder missing: nothing to delete */ }
+    for (const k of [...allowedFiles.keys()]) if (path.dirname(k) === path.resolve(imgDir)) allowedFiles.delete(k);
+    if (lastImage && path.dirname(path.resolve(lastImage.file)) === path.resolve(imgDir)) lastImage = null;
+    return n;
+  });
   ctx.handle('showInFolder', async (file) => { if (!allowed(file)) return false; shell.showItemInFolder(path.resolve(file)); return true; });
   ctx.handle('startDrag', async (file) => {
     if (!allowed(file) || !fs.existsSync(file)) return false;

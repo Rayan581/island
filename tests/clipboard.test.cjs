@@ -74,3 +74,11 @@ test('isScreenshotFile / matchesDisplay / fitThumb', () => {
   assert.deepStrictEqual(c.fitThumb(50, 40), { width: 50, height: 40 });
   assert.deepStrictEqual(c.fitThumb(0, 0), { width: 1, height: 1 });
 });
+
+test('restored images: only our own PNG names count, newest first, capped', () => {
+  const c = require('../electron/features/clipboard.cjs');
+  const names = ['1793000000000.png', '1793000005000-2.png', 'notes.txt', 'photo.png', '1793000009000.png'];
+  const mine = names.filter((n) => /^\d{10,}(-\d+)?\.png$/.test(n)).sort().reverse();
+  assert.deepStrictEqual(mine, ['1793000009000.png', '1793000005000-2.png', '1793000000000.png']);
+  assert.deepStrictEqual(c.pruneList(names, 2), ['1793000000000.png']); // same rule the deleter uses
+});
