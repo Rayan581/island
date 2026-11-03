@@ -350,3 +350,14 @@ test('feature: forwards allowed apps only, lists seen apps, saves toggles, stops
     f.close(); fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('launchTarget: apps open by their Windows app id, browser sites by URL, junk not at all', () => {
+  const n = require('../electron/features/notifications.cjs');
+  const t = (id, att) => n.launchTarget(id, n.resolveApp(id, att), att);
+  assert.deepStrictEqual(t('5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App', ''), { kind: 'app', aumid: '5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App' });
+  assert.deepStrictEqual(t('Chrome', 'mail.google.com'), { kind: 'url', url: 'https://mail.google.com' }); // Gmail opens Gmail, not Chrome
+  assert.deepStrictEqual(t('Chrome', 'example.com'), { kind: 'url', url: 'https://example.com' });
+  assert.strictEqual(t('C:\\x" & calc "', ''), null);
+  assert.strictEqual(t('..\\..\\evil', ''), null);
+  assert.strictEqual(t('', ''), null);
+});

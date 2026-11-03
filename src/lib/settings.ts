@@ -3,7 +3,7 @@ import type { Settings } from './types';
 // Keep in step with electron/settings.cjs (tests/settings.test.cjs checks that they agree).
 export const DEFAULT_SETTINGS: Settings = {
   style: 'floating', idleWidth: 132, activeWidth: 280, height: 36, topOffset: 6, radius: 18, radiusX: 18, ear: 0,
-  expandedWidth: 520, eyesFollow: true, keepOnTop: true, features: {}
+  expandedWidth: 520, eyesFollow: true, keepOnTop: true, features: {}, styles: {}
 };
 
 /** What the two styles set when you pick them; sliders then tweak from there. */
@@ -11,6 +11,9 @@ export const PRESETS: Record<Settings['style'], Partial<Settings>> = {
   floating: { style: 'floating', topOffset: 6, height: 36, radius: 18, radiusX: 18, ear: 0, idleWidth: 132, activeWidth: 280, expandedWidth: 520 },
   notch: { style: 'notch', topOffset: 0, height: 32, radius: 20, radiusX: 20, ear: 15, idleWidth: 288, activeWidth: 340, expandedWidth: 510 }
 };
+
+/** The sliders that belong to a style (what gets remembered per style). */
+export const LOOK_KEYS = ['idleWidth', 'activeWidth', 'height', 'topOffset', 'radius', 'radiusX', 'ear', 'expandedWidth'] as const;
 
 export interface Control { key: keyof Settings; label: string; min: number; max: number; step: number; notchOnly?: boolean; floatingOnly?: boolean }
 

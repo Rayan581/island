@@ -61,3 +61,11 @@ test('cursorRelative: always gives window coordinates, however far the cursor is
   assert.deepStrictEqual(cursorRelative({ x: 700, y: 50 }, b), { x: 90, y: 50 });
   assert.deepStrictEqual(cursorRelative({ x: 100, y: 1500 }, b), { x: -510, y: 1500 });
 });
+
+test('styles: each style\'s look is kept, clamped, and replaced as a whole', () => {
+  const v = sanitize({ styles: { notch: { ear: 99, idleWidth: 300, junk: 1 }, floating: { height: 40 }, blob: { ear: 1 } } });
+  assert.deepStrictEqual(v.styles, { notch: { ear: NUMBERS.ear[1], idleWidth: 300 }, floating: { height: 40 } });
+  const w = sanitize({ styles: { floating: { height: 44 } } }, v);
+  assert.deepStrictEqual(w.styles, { floating: { height: 44 } }); // the notch entry is gone: the renderer sends the whole map
+  assert.deepStrictEqual(sanitize({ ear: 3 }, v).styles, v.styles); // other updates leave it alone
+});

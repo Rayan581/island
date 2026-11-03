@@ -11,6 +11,7 @@
     : nstate.status === 'missing' ? { t: 'Notification database not found', s: 'It is created the first time Windows shows a notification.' }
     : { t: 'No notifications yet', s: 'Messages from your chosen apps appear here and in the pill. Pick the apps in Settings.' }
   );
+  const open = (id: string) => { ctx.call('open', { id }).catch(() => {}); };
   const when = (at: number) => { const d = now - at; return d < 60000 ? 'now' : ago(d).replace(' ago', ''); };
 </script>
 
@@ -19,7 +20,8 @@
     <div class="bar"><span>Recent</span><button onclick={clearAll}>Clear</button></div>
     <ul>
       {#each nstate.items as n (n.id)}
-        <li>
+        <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
+        <li role="button" tabindex="0" title="Open {n.app}" onclick={() => open(n.id)} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(n.id); } }}>
           <AppTile color={n.color} initial={n.initial} size={28} />
           <div class="txt">
             <div class="top"><span class="app ellipsis">{n.app}</span><span class="when tnum">{when(n.at)}</span></div>
@@ -45,7 +47,8 @@
   .bar button:hover { color: #fff; background: rgba(255,255,255,.14); }
   ul { list-style: none; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 2px; padding-right: 2px; }
   li { display: flex; gap: 10px; padding: 6px; border-radius: 12px; animation: viewIn .3s var(--ease); }
-  li:hover { background: rgba(255,255,255,.05); }
+  li { cursor: pointer; }
+  li:hover, li:focus-visible { background: rgba(255,255,255,.07); outline: none; }
   .txt { flex: 1; min-width: 0; }
   .top { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: var(--mute); font-weight: 600; }
   .when { flex: none; font-weight: 500; color: var(--faint); }

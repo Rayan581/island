@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Store } from '../lib/store.svelte';
-  import { CONTROLS, PRESETS, collapsedRadius } from '../lib/settings';
+  import { CONTROLS, collapsedRadius } from '../lib/settings';
   import Eyes from './Eyes.svelte';
   import { features, ctxs } from '../features/registry.svelte';
 
@@ -15,10 +15,11 @@
 <div class="wrap">
   <div class="top">
     <div class="seg" role="group" aria-label="Pill style">
-      <button class:sel={!notch} onclick={() => store.updateSettings(PRESETS.floating)}>Floating</button>
-      <button class:sel={notch} onclick={() => store.updateSettings(PRESETS.notch)}>Notch</button>
+      <button class:sel={!notch} onclick={() => store.switchStyle('floating')}>Floating</button>
+      <button class:sel={notch} onclick={() => store.switchStyle('notch')}>Notch</button>
     </div>
-    <span class="hint">Picking a style loads its preset; the sliders then tune it.</span>
+    <span class="hint">Each style remembers its own sliders.</span>
+    <button class="reset" onclick={() => store.resetStyle()} title="Put this style back to its default look">Reset</button>
   </div>
 
   <div class="stage" style:height="{s.height + (notch ? 0 : s.topOffset) + 14}px" aria-label="Preview of the collapsed pill">
@@ -66,6 +67,8 @@
   .seg button { padding: 3px 14px; border-radius: 10px; font-size: 11px; font-weight: 600; color: var(--mute); }
   .seg button.sel { background: rgba(255,255,255,.92); color: #000; }
   .hint { font-size: 10px; color: var(--faint); }
+  .reset { margin-left: auto; font-size: 10px; color: var(--faint); background: none; border: 1px solid var(--line, rgba(255,255,255,.14)); border-radius: 999px; padding: 2px 9px; cursor: pointer; }
+  .reset:hover { color: var(--text, #fff); }
   .stage { position: relative; flex: none; border-radius: 12px; overflow: hidden; display: flex; justify-content: center;
            background: radial-gradient(circle at 50% 130%, #4262ff, #101a4d 75%); }
   .mini { position: absolute; left: 50%; transform: translateX(-50%); transition: width .3s var(--ease), height .3s var(--ease), top .3s var(--ease); }

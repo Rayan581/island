@@ -27,6 +27,8 @@ export interface Settings {
   eyesFollow: boolean; keepOnTop: boolean;
   /** Feature on/off switches by feature id; missing = the feature's default. */
   features: Record<string, boolean>;
+  /** Each style's own sliders, kept while the other style is active. */
+  styles: Partial<Record<'floating' | 'notch', Partial<Settings>>>;
 }
 
 export interface IslandAPI {

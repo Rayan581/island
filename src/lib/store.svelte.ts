@@ -1,5 +1,5 @@
 import type { ClaudeSession, Config, HookEvent, IslandAPI, LyricLine, MediaEvent, Phase, Settings, View, VolumeEvent } from './types';
-import { DEFAULT_SETTINGS } from './settings';
+import { DEFAULT_SETTINGS, PRESETS, LOOK_KEYS } from './settings';
 import { cursor, sysIdle } from './cursor.svelte';
 
 const STALE_RUNNING_MS = 15 * 60_000;
@@ -83,6 +83,21 @@ export class Store {
       const p = this.pendingSettings; this.pendingSettings = {};
       this.api.setSettings(p).then((v) => Object.assign(this.settings, v));
     }, 150);
+  }
+
+  /** Switch between Floating and Notch: the look you had is remembered, and the other style comes back as you left it (its preset the first time). */
+  switchStyle(to: Settings['style']) {
+    const s = this.settings;
+    if (s.style === to) return;
+    const mine: Partial<Settings> = {};
+    for (const k of LOOK_KEYS) (mine as Record<string, number>)[k] = s[k];
+    this.updateSettings({ ...(s.styles?.[to] ?? PRESETS[to]), style: to, styles: { ...s.styles, [s.style]: mine } });
+  }
+  /** Put the current style back to its preset and forget its saved tweaks. */
+  resetStyle() {
+    const s = this.settings, rest = { ...s.styles };
+    delete rest[s.style];
+    this.updateSettings({ ...PRESETS[s.style], styles: rest });
   }
 
   setFeature(id: string, on: boolean) { this.updateSettings({ features: { ...this.settings.features, [id]: on } }); }

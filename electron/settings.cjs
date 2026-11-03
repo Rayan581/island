@@ -13,7 +13,8 @@ const DEFAULTS = {
   expandedWidth: 520,  // width when opened
   eyesFollow: true,    // Robo's eyes look at the cursor when it is near
   keepOnTop: true,     // keep re-asserting "always on top" so other windows can't cover the pill
-  features: {}         // feature on/off switches by id (missing = the feature's default)
+  features: {},        // feature on/off switches by id (missing = the feature's default)
+  styles: {}           // each style's own sliders, remembered while the other style is active: { floating: {...}, notch: {...} }
 };
 
 const NUMBERS = {
@@ -22,6 +23,17 @@ const NUMBERS = {
 };
 const BOOLEANS = ['eyesFollow', 'keepOnTop'];
 const STYLES = ['floating', 'notch'];
+
+/** The numeric look values of one style, clamped; anything else is dropped. */
+function sanitizeLook(o) {
+  const out = {};
+  if (!o || typeof o !== 'object') return out;
+  for (const [k, [lo, hi]] of Object.entries(NUMBERS)) {
+    const v = Number(o[k]);
+    if (o[k] !== undefined && o[k] !== null && o[k] !== '' && Number.isFinite(v)) out[k] = Math.min(hi, Math.max(lo, Math.round(v)));
+  }
+  return out;
+}
 
 /** Returns `base` with the valid parts of `patch` applied. Unknown keys and bad values are ignored. */
 function sanitize(patch, base = DEFAULTS) {
@@ -36,6 +48,10 @@ function sanitize(patch, base = DEFAULTS) {
   if (patch.features && typeof patch.features === 'object') {
     out.features = { ...base.features };
     for (const [k, v] of Object.entries(patch.features)) if (/^[a-z0-9-]{1,40}$/.test(k) && typeof v === 'boolean') out.features[k] = v;
+  }
+  if (patch.styles && typeof patch.styles === 'object') {
+    out.styles = {}; // the renderer always sends the whole map, so this replaces rather than merges
+    for (const s of STYLES) if (patch.styles[s] && typeof patch.styles[s] === 'object') out.styles[s] = sanitizeLook(patch.styles[s]);
   }
   return out;
 }

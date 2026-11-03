@@ -152,6 +152,19 @@ function isAllowed(primaryId, info, cfg) {
   return !!info.def;
 }
 
+/**
+ * What clicking a notification opens: a website for browser notifications that name their site (Gmail in Chrome opens Gmail,
+ * not Chrome), otherwise the app itself via its Windows app id. null when there is nothing safe to open.
+ */
+function launchTarget(primaryId, info, attribution) {
+  const site = String(attribution || '').trim().toLowerCase();
+  if (info && info.browser && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(site)) return { kind: 'url', url: 'https://' + site };
+  if (info && info.key === 'gmail') return { kind: 'url', url: 'https://mail.google.com' };
+  const id = String(primaryId || '');
+  if (id && id.length <= 260 && /^[\w .!{}()~:\\-]+$/.test(id) && !id.includes('..')) return { kind: 'app', aumid: id };
+  return null;
+}
+
 /** Turns a raw row ({ id, at, payload, app }) into what the renderer gets. Never throws. */
 function toNotification(row, cfg) {
   try {
@@ -159,7 +172,7 @@ function toNotification(row, cfg) {
     if (!t.title && !t.body) return null;
     const info = resolveApp(row.app, t.attribution);
     return {
-      raw: { allowed: isAllowed(row.app, info, cfg), info },
+      raw: { allowed: isAllowed(row.app, info, cfg), info, target: launchTarget(row.app, info, t.attribution) },
       msg: {
         type: 'notification', id: String(row.id), appKey: info.key, app: info.name, color: info.color,
         initial: ((info.name.match(/[A-Za-z0-9]/) || ['•'])[0]).toUpperCase(),
@@ -293,7 +306,7 @@ module.exports = {
   id: 'notifications',
   defaultEnabled: true,
   // exported for tests
-  filetimeToMs, decodeEntities, payloadToString, parseToast, appInfo, resolveApp, isAllowed, toNotification, cleanName, WpnReader, DEFAULT_APPS, loadSqlite,
+  filetimeToMs, launchTarget, decodeEntities, payloadToString, parseToast, appInfo, resolveApp, isAllowed, toNotification, cleanName, WpnReader, DEFAULT_APPS, loadSqlite,
 
   start(ctx) {
     if (process.platform !== 'win32' && !process.env.ISLAND_WPN_DIR) { ctx.handle('seenApps', async () => []); return; }
@@ -305,6 +318,7 @@ module.exports = {
     const seenApps = new Map(); // key -> { key, name, color, def }   (names only, never content)
     let cfg = ctx.config.get() || {};
     let timer = null, stopped = false, failures = 0, lastSent = '';
+    const targets = new Map(); // notification id -> what to open (kept here so the page can only ask for "open #id")
     const recent = []; // [app key + title + body hash-ish, at] for de-duplication of identical bursts
 
     const sendStatus = () => {
@@ -326,6 +340,17 @@ module.exports = {
       cfg = { ...cfg, apps: { ...(cfg.apps || {}), [key]: !!enabled } };
       ctx.config.set(cfg);
       return cfg;
+    });
+    ctx.handle('open', async ({ id } = {}) => {
+      const t = targets.get(String(id));
+      if (!t) return false;
+      try {
+        if (t.kind === 'url') { require('electron').shell.openExternal(t.url); return true; }
+        if (process.platform !== 'win32') return false;
+        // explorer.exe resolves "shell:AppsFolder\<app id>" for Store apps and registered desktop apps alike; it starts the app or brings it to the front.
+        require('child_process').spawn('explorer.exe', ['shell:AppsFolder\\' + t.aumid], { detached: true, stdio: 'ignore' }).unref();
+        return true;
+      } catch (e) { ctx.log('open failed:', e && e.message); return false; }
     });
     ctx.handle('status', async () => ({ status: reader.status, reason: reader.status === 'unsupported' ? reader.reason : '' }));
 
@@ -353,6 +378,7 @@ module.exports = {
             while (recent.length && now - recent[0][1] > 3000) recent.shift();
             if (recent.some((r) => r[0] === sig)) continue;
             recent.push([sig, now]);
+            if (n.raw.target) { targets.set(n.msg.id, n.raw.target); if (targets.size > 100) targets.delete(targets.keys().next().value); }
             ctx.send(n.msg);
           }
           sendStatus();
