@@ -75,13 +75,15 @@ export class Store {
   }
 
   /** Applies a settings change at once (so sliders feel live) and saves it a moment later. */
-  updateSettings(patch: Partial<Settings>) {
+  updateSettings(patchIn: Partial<Settings>) {
+    // Plain copy: reactive ($state) objects can't cross into the main process ("An object could not be cloned").
+    const patch = $state.snapshot(patchIn) as Partial<Settings>;
     Object.assign(this.settings, patch);
     Object.assign(this.pendingSettings, patch);
     clearTimeout(this.settingsTimer);
     this.settingsTimer = window.setTimeout(() => {
       const p = this.pendingSettings; this.pendingSettings = {};
-      this.api.setSettings(p).then((v) => Object.assign(this.settings, v));
+      this.api.setSettings(p).then((v) => Object.assign(this.settings, v)).catch((e) => console.error('[settings] could not save:', e?.message ?? e));
     }, 150);
   }
 
