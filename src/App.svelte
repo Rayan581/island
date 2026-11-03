@@ -44,6 +44,9 @@
   // Hold Ctrl while the pointer is over the island and clicks (and hover) pass through to the app underneath.
   let islandEl: HTMLElement | undefined = $state();
   let openTimer = 0, closeTimer = 0, hovering = false, passing = $state(false), ignoring = true;
+  // A button pressed on the island (dragging a slider, selecting text) keeps it open and clickable until released, even if the pointer
+  // slides past its edge; otherwise it would collapse and go click-through in the middle of the drag.
+  let pressed = false;
   let px = -1, py = -1; // last pointer position in window coordinates (-1 = unknown / outside)
   function startOpen() {
     if (store.expanded) return;
@@ -77,7 +80,7 @@
    * process apply it regardless (after the window was hidden and shown).
    */
   function updatePointer(mode: 'normal' | 'resend' | 'force' = 'normal') {
-    const over = overIsland(px, py), pass = over && ctrlHeld();
+    const over = pressed || overIsland(px, py), pass = over && !pressed && ctrlHeld();
     if (over && !hovering) { hovering = true; clearTimeout(closeTimer); if (!pass) startOpen(); }
     else if (!over && hovering) { hovering = false; clearTimeout(openTimer); clearTimeout(closeTimer); closeTimer = window.setTimeout(collapse, 380); }
     if (pass !== passing) {
@@ -88,8 +91,13 @@
     if (store.config.debug && (ignore !== ignoring || mode !== 'normal')) console.log(`[pointer] ${mode} at ${Math.round(px)},${Math.round(py)} over=${over} ctrl=${pass} -> click-through ${ignore}`);
     if (mode !== 'normal' || ignore !== ignoring) { ignoring = ignore; api.ignoreMouse(ignore, mode === 'force'); }
   }
-  window.addEventListener('mousemove', (e) => { px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); });
-  document.addEventListener('mouseleave', () => { px = py = -1; updatePointer(); }); // left the window entirely
+  window.addEventListener('mousemove', (e) => { if (pressed && e.buttons === 0) pressed = false; /* a lost mouse-up */ px = e.clientX; py = e.clientY; mouseCtrl = e.ctrlKey; updatePointer(); });
+  document.addEventListener('mouseleave', () => { if (!pressed) { px = py = -1; updatePointer(); } }); // left the window entirely
+  window.addEventListener('mousedown', (e) => { if (e.button === 0 && overIsland(e.clientX, e.clientY)) pressed = true; }, true);
+  const release = () => { if (!pressed) return; pressed = false; updatePointer(); };
+  window.addEventListener('mouseup', release, true);
+  window.addEventListener('blur', release);
+  window.addEventListener('dragend', release);
   api.onCtrl((down) => { haveNative = true; nativeCtrl = down; updatePointer(); });
   // Something else changed click-through behind our back (the shelf's drop gate, a dialog): re-assert ours.
   window.addEventListener('island:resync', () => updatePointer('resend'));
