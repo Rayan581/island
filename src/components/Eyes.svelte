@@ -81,10 +81,12 @@
   .love i::before { background: #ff9ec1; box-shadow: none; transform: scale(1.5, 1.02); border-radius: 0; animation: heartbeat .7s ease-in-out infinite;
     clip-path: polygon(50% 100%, 12% 62%, 3% 40%, 4% 22%, 14% 8%, 30% 4%, 42% 12%, 50% 24%, 58% 12%, 70% 4%, 86% 8%, 96% 22%, 97% 40%, 88% 62%); }
 
-  /* dizzy: swirling eyes and a wobble */
+  /* dizzy: each eye is a spiral that keeps spinning, with a little wobble */
   .dizzy { animation: wobble .5s ease-in-out infinite; }
-  .dizzy i { animation: none; }
-  .dizzy i::before { transform: scale(1.3); background: conic-gradient(var(--c), transparent 38%, var(--c) 70%, transparent); box-shadow: none; animation: swirl .5s linear infinite; }
+  .dizzy i { animation: none; filter: drop-shadow(0 0 calc(3px * var(--k)) rgba(160, 245, 190, .45)); }
+  .dizzy i::before { width: calc(12px * var(--k)); height: calc(12px * var(--k)); margin: calc(-6px * var(--k)) 0 0 calc(-6px * var(--k));
+    border-radius: 50%; box-shadow: none; transform: none; animation: swirl .65s linear infinite;
+    background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12.80%2012.00%20L12.91%2012.25%20L12.94%2012.56%20L12.85%2012.89%20L12.65%2013.22%20L12.34%2013.49%20L11.92%2013.67%20L11.44%2013.73%20L10.92%2013.64%20L10.41%2013.39%20L9.97%2012.98%20L9.64%2012.43%20L9.47%2011.77%20L9.48%2011.05%20L9.71%2010.33%20L10.14%209.67%20L10.77%209.13%20L11.56%208.76%20L12.46%208.61%20L13.40%208.72%20L14.31%209.10%20L15.12%209.73%20L15.74%2010.59%20L16.13%2011.63%20L16.22%2012.77%20L16.00%2013.92%20L15.45%2015.01%20L14.60%2015.94%20L13.51%2016.63%20L12.23%2017.01%20L10.85%2017.03%20L9.48%2016.67%20L8.23%2015.94%20L7.19%2014.87%20L6.46%2013.53%20L6.11%2012.00%20L6.18%2010.39%20L6.69%208.83%20L7.63%207.43%20L8.93%206.30%20L10.53%205.55%20L12.30%205.24%20L14.13%205.43%20L15.89%206.11%20L17.42%207.26%20L18.62%208.81%20L19.37%2010.66%20L19.60%2012.68%20L19.28%2014.73%20L18.41%2016.66%20L17.03%2018.31%20L15.23%2019.55%20L13.12%2020.29%20L10.86%2020.43%20L8.60%2019.96%20L6.51%2018.88%20L4.76%2017.26%20L3.49%2015.19%20L2.80%2012.83%20L2.77%2010.33%20L3.42%207.87%20L4.72%205.64%20L6.59%203.81%20L8.92%202.53%20L11.55%201.90%20L14.28%202.01%20L16.93%202.84%20L19.29%204.38%20L21.18%206.52%20L22.44%209.12%20L22.98%2012.00'%20fill='none'%20stroke='%23c4f5d2'%20stroke-width='2.6'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
 
   /* worried: eyes tilt in, a little smaller, trembling */
   .worried { animation: tremble .16s linear infinite; }
@@ -135,7 +137,7 @@
   @keyframes blink2 { 0%, 100% { transform: scaleY(1); } 18%, 62% { transform: scaleY(.1); } 40% { transform: scaleY(1); } }
   @keyframes sleepblink { 0%, 86%, 100% { transform: scaleY(1); } 91%, 94% { transform: scaleY(.08); } }
   @keyframes heartbeat { 0%, 100% { transform: scale(1.5, 1.02); } 50% { transform: scale(1.68, 1.16); } }
-  @keyframes swirl { to { transform: rotate(360deg) scale(1.3); } }
+  @keyframes swirl { to { transform: rotate(360deg); } }
   @keyframes wobble { 0%, 100% { translate: -1px 0; } 50% { translate: 1px 0; } }
   @keyframes tremble { 0%, 100% { translate: -.5px 0; } 50% { translate: .5px 0; } }
   @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -1.4px; } }
