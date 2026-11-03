@@ -57,15 +57,35 @@ A small orange dot appears in the pill while any app uses the microphone, and a 
 
 ### Robo personality
 
-Robo's eyes show moods, all done with CSS (no layout change, nothing heavy):
+Robo is only eyes (no mouth, no eyebrows), and everything is done with CSS, so nothing is heavy. The eyes show on the idle, focus-timer, Claude and music pills, so you see the moods while things happen.
 
-- **Focused**: flat, slightly slanted eyes while Claude is working.
-- **Happy**: upward arcs for 2.5 s after something finishes (Claude done, focus complete).
-- **Surprised**: wide, round eyes with a quick pop for 2 s when Claude needs you.
-- **Sleepy**: half-closed, dimmer eyes with a slow blink between 00:00 and 06:00 (switch off in Settings) or after
-  10 minutes without cursor movement.
+**Moods from what you're doing**
 
-Now and then Robo double-blinks, or glances to the side when the cursor is still. Turn it all off under Settings → Features.
+| Eyes | When |
+|---|---|
+| Squint | Claude Code is working |
+| Determined (sharp, tilted) | the focus timer is running |
+| Worried (tilted, trembling, a sweat drop) | the battery is at or below the warning level and not charging |
+| Music (a gentle bob, a ♪) | music is playing |
+| Happy (arcs, a sparkle) | Claude finished, a focus session ended, or the charger was plugged in |
+| Surprised | Claude needs you, or the battery is critical |
+| Heart eyes | a new song starts (sometimes) |
+
+**Moods from the cursor.** These use the cursor anywhere on screen, so they work while the pill is collapsed (hovering the pill opens it and hides the eyes):
+
+- **Curious:** the cursor comes close, so the eyes widen a little.
+- **Startled:** the cursor darts at the pill.
+- **Dizzy:** you shake the mouse back and forth anywhere on screen, and the eyes swirl.
+- **Wink:** the cursor rests near the pill for a moment.
+
+**Moods from time and idleness**
+
+- **Bored** after 90 s without any mouse or keyboard input (looking around), a **yawn** at 2½ minutes, **sleepy** with floating "z"s at 4 minutes. Move the mouse or press a key and Robo wakes with a startled blink and a smile. Idle time is Windows' own (typing counts as being here).
+- **Sleepy at night** between 00:00 and 06:00 (switch off in Settings).
+- **Good morning wink** the first time you're back each morning (once a day, 04:00-12:00).
+- **Tired** (droopy eyes) after three hours without a real break (5 minutes of quiet), repeating every half hour.
+
+**Settings → Features → Robo personality:** *Calm* (only reacts to events: Claude, music, battery, idling; no cursor games and slower fidgeting), *Normal*, or *Playful* (reacts to smaller nudges and fidgets more); sleepy at night; and *Soft sounds* (tiny synthesized blips on reactions, off by default). Turn Robo off entirely with the feature switch and the eyes stay plain.
 
 ### Game mode
 

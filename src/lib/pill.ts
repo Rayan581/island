@@ -1,4 +1,5 @@
 import type { Store } from './store.svelte';
+import { robo } from './mood.svelte';
 
 import { topFeaturePill, liveBadges, ctxs } from '../features/registry.svelte';
 const ctxOf = (f: IslandFeature) => ctxs[f.id];
@@ -51,5 +52,6 @@ export function pillState(s: Store): { kind: PillKind; badges: Badge[]; width: n
   const featureW = feature && feature.pill ? feature.pill.width(ctxOf(feature)) : 0;
   const base = kind === 'feature' ? Math.max(featureW, idleWidth) : kind === 'idle' ? idleWidth : kind === 'volume' || kind === 'lyrics' ? activeWidth + 80 : activeWidth;
   const badgeW = badges.reduce((w, b) => w + (b === 'focus' ? 62 : 28), 0) + featureBadges.length * 22;
-  return { kind, badges, feature, featureBadges, width: base + badgeW + (kind === 'idle' && (badges.length || featureBadges.length) ? 24 : 0) };
+  const eyesW = robo.on && (kind === 'lyrics' || kind === 'track') ? 24 : 0; // Robo rides along in the music pill
+  return { kind, badges, feature, featureBadges, width: base + badgeW + eyesW + (kind === 'idle' && (badges.length || featureBadges.length) ? 24 : 0) };
 }

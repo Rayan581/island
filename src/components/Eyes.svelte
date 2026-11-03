@@ -4,6 +4,9 @@
 
   let { size = 1, follow = true, mood = undefined }: { size?: number; follow?: boolean; mood?: Mood } = $props();
   const shown = $derived(mood ?? robo.mood);
+  /** Tiny props that go with a mood (sparkles, hearts, a sweat drop, z's, a note). */
+  const FX: Partial<Record<Mood, string>> = { sleepy: 'z', love: 'heart', worried: 'sweat', music: 'note', happy: 'sparkle' };
+  const fx = $derived(FX[shown] ?? '');
   let el: HTMLElement | undefined = $state();
   let dx = $state(0), dy = $state(0);
   let blinking = $state<'' | 'one' | 'two'>('');
@@ -33,9 +36,9 @@
     blinkTimer = window.setTimeout(() => (blinking = ''), 800);
   });
 </script>
-<span class="eyes {shown}" class:one={blinking === 'one'} class:two={blinking === 'two'} bind:this={el} style:--k={size} style:--dx="{dx.toFixed(2)}px" style:--dy="{dy.toFixed(2)}px" aria-label="Robo"><i></i><i></i></span>
+<span class="eyes {shown}" class:one={blinking === 'one'} class:two={blinking === 'two'} bind:this={el} style:--k={size} style:--dx="{dx.toFixed(2)}px" style:--dy="{dy.toFixed(2)}px" aria-label="Robo"><i></i><i></i>{#if fx === 'z'}<b class="fx z" aria-hidden="true"><u class="a">z</u><u class="b">z</u></b>{:else if fx === 'note'}<b class="fx note" aria-hidden="true"><u class="a">♪</u></b>{:else if fx === 'heart'}<b class="fx heart" aria-hidden="true"><svg class="a" viewBox="0 0 10 9"><path d="M5 9C-3 4 1.5-1 5 2.6 8.5-1 13 4 5 9z"/></svg><svg class="b" viewBox="0 0 10 9"><path d="M5 9C-3 4 1.5-1 5 2.6 8.5-1 13 4 5 9z"/></svg></b>{:else if fx === 'sparkle'}<b class="fx sparkle" aria-hidden="true"><svg class="a" viewBox="0 0 10 10"><path d="M5 0 6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z"/></svg><svg class="b" viewBox="0 0 10 10"><path d="M5 0 6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z"/></svg></b>{:else if fx === 'sweat'}<b class="fx sweat" aria-hidden="true"><svg class="a" viewBox="0 0 10 12"><path d="M5 0C5 0 0 6 0 8.2A5 5 0 0 0 10 8.2C10 6 5 0 5 0z"/></svg></b>{/if}</span>
 <style>
-  .eyes { --c: #c4f5d2; --e: cubic-bezier(.3, .9, .3, 1);
+  .eyes { position: relative; --c: #c4f5d2; --e: cubic-bezier(.3, .9, .3, 1);
           display: inline-flex; gap: calc(6px * var(--k)); align-items: center; transform: translate(var(--dx, 0), var(--dy, 0)); transition: transform .14s ease-out; }
   /* Each eye is a fixed-size slot, so a mood never moves anything around it. The slot blinks; ::before is the
      solid eye, ::after the happy arc, and only transform / opacity / border-radius change between moods. */
@@ -50,8 +53,8 @@
 
   /* squint: flat-topped, wide and low, brows slanted in toward the middle */
   .squint i::before { transform: scale(1.18, .5); border-radius: 30% 30% 50% 50% / 24% 24% 76% 76%; }
-  .squint i:first-child::before { transform: scale(1.18, .5) rotate(5deg); }
-  .squint i:last-child::before { transform: scale(1.18, .5) rotate(-5deg); }
+  .squint i:first-of-type::before { transform: scale(1.18, .5) rotate(5deg); }
+  .squint i:last-of-type::before { transform: scale(1.18, .5) rotate(-5deg); }
 
   /* happy: the solid eye melts away and an upward arc fades in */
   .happy i { animation: none; }
@@ -65,6 +68,65 @@
   .sleepy i { animation: sleepblink 7s infinite; }
   .sleepy i::before { transform: translateY(calc(1.6px * var(--k))) scale(1.08, .46); border-radius: 22% 22% 50% 50% / 14% 14% 86% 86%; opacity: .78; }
 
+  /* wink: the right eye closes into the happy arc while the left stays open */
+  .wink i:last-of-type { animation: none; }
+  .wink i:last-of-type::before { opacity: 0; transform: scale(1.1, .3); }
+  .wink i:last-of-type::after { opacity: 1; transform: translateY(0) scale(1); }
+
+  /* curious: a little wider awake, with a soft glow */
+  .curious i::before { transform: scale(1.14, 1.12); box-shadow: 0 0 calc(10px * var(--k)) rgba(160, 245, 190, .5); }
+
+  /* love: heart-shaped eyes that pulse (pink) */
+  .love i { animation: none; filter: drop-shadow(0 0 calc(3px * var(--k)) rgba(255, 120, 170, .55)); }
+  .love i::before { background: #ff9ec1; box-shadow: none; transform: scale(1.5, 1.02); border-radius: 0; animation: heartbeat .7s ease-in-out infinite;
+    clip-path: polygon(50% 100%, 12% 62%, 3% 40%, 4% 22%, 14% 8%, 30% 4%, 42% 12%, 50% 24%, 58% 12%, 70% 4%, 86% 8%, 96% 22%, 97% 40%, 88% 62%); }
+
+  /* dizzy: swirling eyes and a wobble */
+  .dizzy { animation: wobble .5s ease-in-out infinite; }
+  .dizzy i { animation: none; }
+  .dizzy i::before { transform: scale(1.3); background: conic-gradient(var(--c), transparent 38%, var(--c) 70%, transparent); box-shadow: none; animation: swirl .5s linear infinite; }
+
+  /* worried: eyes tilt in, a little smaller, trembling */
+  .worried { animation: tremble .16s linear infinite; }
+  .worried i::before { transform: scale(.88, .98); opacity: .92; }
+  .worried i:first-of-type::before { transform: scale(.88, .98) rotate(13deg); }
+  .worried i:last-of-type::before { transform: scale(.88, .98) rotate(-13deg); }
+
+  /* determined (focus): sharp, flat-topped and tilted, a touch brighter */
+  .determined i::before { transform: scale(1.12, .74); border-radius: 26% 26% 50% 50% / 20% 20% 80% 80%; box-shadow: 0 0 calc(9px * var(--k)) rgba(160, 245, 190, .5); }
+  .determined i:first-of-type::before { transform: scale(1.12, .74) rotate(11deg); }
+  .determined i:last-of-type::before { transform: scale(1.12, .74) rotate(-11deg); }
+
+  /* bored: flat, half-lidded, slow blinks (the controller adds the sideways looks) */
+  .bored i { animation: sleepblink 5s infinite; }
+  .bored i::before { transform: scale(1.08, .52); border-radius: 22% 22% 50% 50% / 16% 16% 84% 84%; opacity: .9; }
+
+  /* yawn: the eyes squeeze shut and open again */
+  .yawn i { animation: yawn 1.6s ease-in-out 1; }
+  .yawn i::before { transform: scale(1.1, .85); }
+
+  /* tired: drooping outer corners, dim, heavy blinks */
+  .tired i { animation: sleepblink 4s infinite; }
+  .tired i::before { opacity: .74; border-radius: 22% 22% 50% 50% / 14% 14% 86% 86%; transform: translateY(calc(1.4px * var(--k))) scale(1.05, .6); }
+  .tired i:first-of-type::before { transform: translateY(calc(1.4px * var(--k))) scale(1.05, .6) rotate(-9deg); }
+  .tired i:last-of-type::before { transform: translateY(calc(1.4px * var(--k))) scale(1.05, .6) rotate(9deg); }
+
+  /* music: a gentle bob to the beat */
+  .music { animation: bob .9s ease-in-out infinite; }
+
+  /* props: tiny and above-right of the eyes */
+  .fx { position: absolute; left: calc(100% + 1px * var(--k)); top: calc(-1px * var(--k)); width: 0; height: 0; pointer-events: none; color: var(--c); }
+  .fx u { position: absolute; left: 0; top: 0; text-decoration: none; font: 700 calc(7px * var(--k)) / 1 ui-rounded, system-ui, sans-serif; opacity: 0; animation: floatUp 2.6s ease-out infinite; }
+  .fx .b { animation-delay: 1.3s; }
+  .fx u.b { font-size: calc(9px * var(--k)); }
+  .fx svg { position: absolute; left: 0; top: 0; width: calc(7px * var(--k)); height: calc(7px * var(--k)); fill: currentColor; opacity: 0; }
+  .heart svg { fill: #ff8fb3; animation: floatUp 2s ease-out infinite; }
+  .heart svg.b { animation-delay: 1s; left: calc(3px * var(--k)); }
+  .sparkle svg { fill: #fff3b0; animation: twinkle 1.6s ease-in-out infinite; }
+  .sparkle svg.a { top: calc(-4px * var(--k)); left: calc(1px * var(--k)); }
+  .sparkle svg.b { width: calc(5px * var(--k)); height: calc(5px * var(--k)); top: calc(1px * var(--k)); left: calc(5px * var(--k)); animation-delay: .8s; }
+  .sweat svg { fill: #82cbff; width: calc(5px * var(--k)); height: calc(6px * var(--k)); animation: drip 1.5s ease-in infinite; }
+
   .one i { animation: blink1 .3s ease-in-out 1; }
   .two i { animation: blink2 .75s ease-in-out 1; }
 
@@ -72,6 +134,15 @@
   @keyframes blink1 { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.1); } }
   @keyframes blink2 { 0%, 100% { transform: scaleY(1); } 18%, 62% { transform: scaleY(.1); } 40% { transform: scaleY(1); } }
   @keyframes sleepblink { 0%, 86%, 100% { transform: scaleY(1); } 91%, 94% { transform: scaleY(.08); } }
+  @keyframes heartbeat { 0%, 100% { transform: scale(1.5, 1.02); } 50% { transform: scale(1.68, 1.16); } }
+  @keyframes swirl { to { transform: rotate(360deg) scale(1.3); } }
+  @keyframes wobble { 0%, 100% { translate: -1px 0; } 50% { translate: 1px 0; } }
+  @keyframes tremble { 0%, 100% { translate: -.5px 0; } 50% { translate: .5px 0; } }
+  @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -1.4px; } }
+  @keyframes yawn { 0%, 100% { transform: scaleY(1); } 25%, 75% { transform: scale(1.12, .1); } }
+  @keyframes floatUp { 0% { opacity: 0; transform: translate(0, 3px) scale(.6); } 20% { opacity: .95; } 100% { opacity: 0; transform: translate(4px, -6px) scale(1); } }
+  @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(25deg); } }
+  @keyframes drip { 0% { opacity: 0; transform: translateY(-1px); } 25% { opacity: .95; } 100% { opacity: 0; transform: translateY(6px); } }
   @keyframes pop { 0% { transform: scale(.8, .8); } 55% { transform: scale(1.5, 1.4); } 100% { transform: scale(1.3, 1.22); } }
   @media (prefers-reduced-motion: reduce) { i, i::before, i::after { animation: none !important; transition: none !important; } }
 </style>

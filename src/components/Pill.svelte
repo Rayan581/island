@@ -53,6 +53,7 @@
         {#if kind === 'lyrics'}{store.lyricLine || '♪'}{:else}{store.music.title} <span class="dim">· {store.music.artist}</span>{/if}
       </span>
     {/key}
+    {#if robo.on}<Eyes size={0.75} follow={store.settings.eyesFollow} />{/if}
     <Eq playing={store.music.playing} />
   {/if}
 
