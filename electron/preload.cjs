@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('island', {
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
   onSettings: on('settings'),
   onCursor: on('cursor'),
+  onIdle: on('idle'),
   onCtrl: on('ctrl'),
   onFeature: on('feature'),
   onResync: on('resync'),

@@ -202,6 +202,8 @@ app.whenReady().then(() => {
   });
   applyKeepOnTop();
   applyCursorPolling();
+  // Robo falls asleep after real inactivity (no mouse or keyboard at all), which only the OS knows.
+  setInterval(() => send('idle', powerMonitor.getSystemIdleTime()), 2000);
   try { globalShortcut.register('Control+Alt+I', () => setHidden(!hidden)); } catch { /* shortcut taken: the tray item still works */ }
 
   ipcMain.on('ignore-mouse', (_e, ignore, force) => setClickThrough(ignore, !!force));

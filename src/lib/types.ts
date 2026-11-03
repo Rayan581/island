@@ -41,6 +41,8 @@ export interface IslandAPI {
   featureCall(id: string, action: string, arg?: unknown): Promise<unknown>;
   pathForFile(file: File): string;
   onCtrl(cb: (down: boolean) => void): () => void;
+  /** Seconds since the last mouse or keyboard input anywhere in Windows (every 2 s). */
+  onIdle(cb: (seconds: number) => void): () => void;
   onCursor(cb: (p: { x: number; y: number } | null) => void): () => void;
   /** Click-through on/off. Repeats are ignored by the main process unless `force`. */
   ignoreMouse(v: boolean, force?: boolean): void;

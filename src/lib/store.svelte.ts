@@ -1,6 +1,8 @@
 import type { ClaudeSession, Config, HookEvent, IslandAPI, LyricLine, MediaEvent, Phase, Settings, View, VolumeEvent } from './types';
 import { DEFAULT_SETTINGS } from './settings';
-import { cursor } from './cursor.svelte';
+import { cursor, sysIdle } from './cursor.svelte';
+
+const STALE_RUNNING_MS = 15 * 60_000;
 import { accentFromImage, fallbackAccent, type Accent } from './color';
 import { basename } from './format';
 import { islandEvents } from './events';
@@ -68,6 +70,7 @@ export class Store {
     api.getSettings().then((v) => Object.assign(this.settings, v));
     api.onSettings((v) => { Object.assign(this.settings, v); }); // no return value: it would have to cross the context bridge
     api.onCursor((p) => { if (p) { cursor.x = p.x; cursor.y = p.y; cursor.near = true; } else cursor.near = false; });
+    api.onIdle((s) => { sysIdle.s = s; sysIdle.at = Date.now(); });
     setInterval(() => this.tick(), 250);
   }
 
@@ -221,6 +224,8 @@ export class Store {
 
   tick() {
     this.now = Date.now();
+    // A session that says "running" but hasn't sent any hook event for 15 minutes has most likely died (closed terminal, crash, sleep) without a Stop event.
+    for (const s of Object.values(this.sessions)) if (s.status === 'running' && this.now - s.updatedAt > STALE_RUNNING_MS) Object.assign(s, { status: 'idle', endedAt: this.now });
     const f = this.focus;
     if (f.running) {
       f.left = Math.max(0, (f.endsAt - this.now) / 1000);

@@ -1,6 +1,6 @@
 import type { FeatureCtx } from '../types';
 import { robo, type Mood } from '../../lib/mood.svelte';
-import { cursor } from '../../lib/cursor.svelte';
+import { cursor, sysIdle } from '../../lib/cursor.svelte';
 import { islandEvents } from '../../lib/events';
 import { baseMood, resolveMood, nextTransient, HAPPY_MS, SURPRISED_MS, type Transient } from './mood';
 import { roboSettings } from './state.svelte';
@@ -20,6 +20,12 @@ function glance(ms: number) {
 export function startRobo(ctx: FeatureCtx) {
   let lastMove = Date.now(), lx = cursor.x, ly = cursor.y;
   let nextLife = Date.now() + 4000;
+  /** Quiet time: the shorter of "cursor hasn't moved" and Windows' own idle time, so typing or reading never looks idle, and a laptop waking from sleep doesn't either. */
+  const idleFor = (wall: number) => {
+    const byCursor = wall - lastMove;
+    const fresh = sysIdle.s >= 0 && wall - sysIdle.at < 6000;
+    return fresh ? Math.min(byCursor, sysIdle.s * 1000 + (wall - sysIdle.at)) : byCursor;
+  };
 
   islandEvents.on('success', () => { if (ctx.enabled) trigger('happy', HAPPY_MS); });
   islandEvents.on('error', () => { if (ctx.enabled) trigger('surprised', SURPRISED_MS); });
@@ -36,11 +42,14 @@ export function startRobo(ctx: FeatureCtx) {
       if (cursor.x !== lx || cursor.y !== ly) { lx = cursor.x; ly = cursor.y; lastMove = wall; }
       const inputs = {
         enabled: ctx.enabled, claudeRunning: ctx.store.runningCount > 0, hour: new Date(wall).getHours(),
-        idleMs: wall - lastMove, sleepyAtNight: roboSettings.sleepyAtNight
+        idleMs: idleFor(wall), sleepyAtNight: roboSettings.sleepyAtNight
       };
       if (robo.on !== ctx.enabled) robo.on = ctx.enabled;
       const mood = resolveMood(inputs, transient, wall);
-      if (robo.mood !== mood) robo.mood = mood;
+      if (robo.mood !== mood) {
+        console.log(`[robo] ${robo.mood} -> ${mood} (idle ${Math.round(inputs.idleMs / 1000)}s, hour ${inputs.hour}, claude running ${ctx.store.runningCount})`);
+        robo.mood = mood;
+      }
       const until = inputs.enabled && transient && transient.until > wall ? transient.until : 0;
       if (robo.until !== until) robo.until = until;
 
